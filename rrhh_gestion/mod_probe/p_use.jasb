@@ -1,0 +1,8 @@
+usar todo de "p_est.jasb"
+
+enviar funcion p_run() retorna entero
+    texto t = mem_lista_obtener(G, 0)
+    texto u = concatenar("x", t)
+    imprimir u
+    retornar 1
+fin_funcion

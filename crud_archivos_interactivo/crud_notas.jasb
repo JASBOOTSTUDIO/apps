@@ -1,0 +1,103 @@
+# CRUD interactivo — punto de entrada (menú).
+# Módulos: lib/const.jasb, lib/crud_leer.jasb, lib/crud_escribir.jasb
+#
+# Compilar desde esta carpeta:
+#   ..\..\sdk-dependiente\jas-compiler-c\bin\jbc.exe crud_notas.jasb -o %TEMP%\crud.jbo
+# Demo: type demo_stdin.txt | ..\..\sdk-dependiente\jasboot-ir\bin\jasboot-ir-vm.exe --continuo %TEMP%\crud.jbo
+
+usar todas de "lib/const.jasb"
+usar todas de "lib/crud_leer.jasb"
+usar todas de "lib/crud_escribir.jasb"
+
+principal
+    mientras 1 hacer
+        limpiar_consola
+        imprimir "=== Notas CRUD (archivo: ${crud_arch_resolver()}) ==="
+        imprimir "1 = Crear | 2 = Listar | 3 = Ver | 4 = Editar | 5 = Borrar | 0 = Salir"
+        imprimir ""
+        imprimir_sin_salto "Opcion: "
+        ingresar_texto opcion
+        si longitud(opcion) == 0 entonces
+            imprimir "(sin entrada / EOF — saliendo)"
+            romper
+        fin_si
+        si opcion == "0" entonces
+            imprimir "Adios."
+            romper
+        fin_si
+        si opcion == "1" entonces
+            entero nid = crud_max_id()
+            nid = nid + 1
+            imprimir "Titulo:"
+            ingresar_texto titulo_nuevo
+            imprimir "Notas:"
+            ingresar_texto detalle_nuevo
+            texto nid_txt = str_desde_numero(nid)
+            texto q1 = concatenar(nid_txt, CRUD_SEP)
+            texto q2 = concatenar(q1, titulo_nuevo)
+            texto q3 = concatenar(q2, CRUD_SEP)
+            texto linea_nueva = concatenar(q3, detalle_nuevo)
+            texto arch = crud_arch_resolver()
+            entero fh = abrir_archivo(arch, "a")
+            escribir_archivo(linea_nueva, fh)
+            escribir_archivo("\n", fh)
+            cerrar_archivo(fh)
+            imprimir "Creado id:"
+            imprimir nid_txt
+        fin_si
+        si opcion == "2" entonces
+            texto arch_list = crud_arch_resolver()
+            si existe_archivo(arch_list) == 0 entonces
+                imprimir "(sin archivo o vacio)"
+            sino
+                texto volcado = fs_leer_texto(arch_list)
+                imprimir "---"
+                imprimir volcado
+                imprimir "---"
+            fin_si
+        fin_si
+        si opcion == "3" entonces
+            imprimir "Id a ver:"
+            ingresar_texto sid
+            entero vid = str_a_entero(sid)
+            texto found = crud_buscar_linea_por_id(vid)
+            si longitud(found) == 0 entonces
+                imprimir "(no existe)"
+            sino
+                imprimir found
+            fin_si
+        fin_si
+        si opcion == "4" entonces
+            imprimir "Id a editar:"
+            ingresar_texto sid_e
+            entero eid = str_a_entero(sid_e)
+            texto prev = crud_buscar_linea_por_id(eid)
+            si longitud(prev) == 0 entonces
+                imprimir "(no existe)"
+            sino
+                imprimir "Nuevo titulo:"
+                ingresar_texto tit_ed
+                imprimir "Nuevas notas:"
+                ingresar_texto det_ed
+                texto body = crud_reemplazar_linea(eid, tit_ed, det_ed)
+                crud_guardar_texto(body)
+                imprimir "Actualizado."
+            fin_si
+        fin_si
+        si opcion == "5" entonces
+            imprimir "Id a borrar:"
+            ingresar_texto sid_b
+            entero bid = str_a_entero(sid_b)
+            texto body_b = crud_archivo_sin_id(bid)
+            crud_guardar_texto(body_b)
+            imprimir "Listo (si existia, se quito la fila)."
+        fin_si
+        imprimir ""
+        imprimir "Enter para volver al menu..."
+        ingresar_texto pausa_vuelta
+        # Ref. a pausa_vuelta (evita aviso "no usada" en jbc)
+        si contiene_texto(pausa_vuelta, "<<<nunca>>>") entonces
+            imprimir ""
+        fin_si
+    fin_mientras
+fin_principal

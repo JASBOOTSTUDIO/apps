@@ -1,0 +1,35 @@
+# ============================================================
+# nucleodb/src/busqueda/semantica.jasb
+# Búsqueda semántica usando el motor vectorial (JMN)
+# ============================================================
+
+usar {vec_buscar_similares, vec_indexar} de "../nucleo/vectores.jasb"
+
+enviar funcion buscar_semantico(texto coleccion, texto consulta, entero top_k) retorna lista
+    # Solicitar mas candidatos al motor vectorial para poder filtrar
+    entero candidatos_a_pedir = top_k * 5
+    lista candidatos = vec_buscar_similares(consulta, candidatos_a_pedir)
+
+    # Filtrar por prefijo de coleccion (ej: "usuarios_123")
+    lista resultados = mem_lista_crear()
+    texto prefijo = coleccion + "_"
+    
+    entero i = 0
+    mientras i < mem_lista_tamano(candidatos) hacer
+        texto id_candidato = mem_lista_obtener(candidatos, i)
+        
+        # Verificar si el candidato pertenece a la coleccion
+        si contiene_texto(id_candidato, prefijo) entonces
+            mem_lista_agregar(resultados, id_candidato)
+            
+            # Cortar si ya tenemos suficientes
+            si mem_lista_tamano(resultados) >= top_k entonces
+                i = mem_lista_tamano(candidatos)  # salir del bucle
+            fin_si
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+
+    retornar resultados
+fin_funcion

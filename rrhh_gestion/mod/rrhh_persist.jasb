@@ -1,0 +1,12 @@
+# Guardado conjunto empleados + nóminas.
+usar todo de "rrhh_empleados.jasb"
+usar todo de "rrhh_nominas.jasb"
+
+enviar funcion rrhh_guardar_todo() retorna entero
+    entero ok_emp = rrhh_guardar_emp()
+    entero ok_nom = rrhh_guardar_nom()
+    si ok_emp == 1 y ok_nom == 1 entonces
+        retornar 1
+    fin_si
+    retornar 0
+fin_funcion

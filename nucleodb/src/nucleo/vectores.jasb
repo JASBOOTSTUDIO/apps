@@ -1,0 +1,87 @@
+
+# ============================================================
+# nucleodb/src/nucleo/vectores.jasb
+# Motor vectorial sobre JMN nativa de Jasboot
+# Usa mem_asociar + propagar_activacion + rastro_activacion
+# ============================================================
+
+enviar funcion vec_indexar(texto id_nodo, texto contenido_texto) retorna bool
+    # Registrar el nodo como concepto en la JMN
+    recordar id_nodo con valor contenido_texto
+
+    # Registrar en la ventana de percepcion temporal
+    percepcion(id_nodo)
+
+    # Tokenizar y asociar palabras clave con el nodo
+    lista palabras = dividir_texto(contenido_texto, " ")
+    entero i = 0
+    mientras i < mem_lista_tamano(palabras) hacer
+        texto palabra = mem_lista_obtener(palabras, i)
+        si longitud_texto(palabra) > 3 entonces
+            mem_asociar(id_nodo, palabra, 0.7)
+            mem_asociar(palabra, id_nodo, 0.5)
+        fin_si
+        i = i + 1
+    fin_mientras
+
+    retornar verdadero
+fin_funcion
+
+enviar funcion vec_buscar_similares(texto consulta, entero top_k) retorna lista
+    # Indexar la consulta de forma temporal
+    texto id_consulta = "_ndb_consulta_tmp"
+    recordar id_consulta con valor consulta
+
+    # Tokenizar la consulta y asociar con el id temporal
+    lista tokens = dividir_texto(consulta, " ")
+    entero t = 0
+    mientras t < mem_lista_tamano(tokens) hacer
+        texto token = mem_lista_obtener(tokens, t)
+        si longitud_texto(token) > 3 entonces
+            mem_asociar(id_consulta, token, 0.8)
+        fin_si
+        t = t + 1
+    fin_mientras
+
+    # Propagar activacion para encontrar nodos similares
+    propagar_activacion(id_consulta)
+
+    # Recolectar el rastro de activacion
+    lista similares = mem_lista_crear()
+    entero total = rastro_activacion_tamano()
+    entero limite = top_k
+    si total < limite entonces
+        limite = total
+    fin_si
+    entero i = 0
+    mientras i < limite hacer
+        texto id_similar = rastro_activacion_obtener(i)
+        si id_similar != id_consulta entonces
+            mem_lista_agregar(similares, id_similar)
+        fin_si
+        i = i + 1
+    fin_mientras
+
+    retornar similares
+fin_funcion
+
+enviar funcion vec_similitud(texto id1, texto id2) retorna flotante
+    retornar mem_obtener_fuerza(id1, id2)
+fin_funcion
+
+enviar funcion vec_reforzar(texto id_nodo) retorna bool
+    reforzar(id_nodo, 20)
+    retornar verdadero
+fin_funcion
+
+enviar funcion vec_debilitar(texto id_nodo) retorna bool
+    penalizar(id_nodo, 10)
+    retornar verdadero
+fin_funcion
+
+enviar funcion vec_mantenimiento() retorna bool
+    decae_conexiones()
+    olvidar_debiles()
+    consolidar_memoria()
+    retornar verdadero
+fin_funcion

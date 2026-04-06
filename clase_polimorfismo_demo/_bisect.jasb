@@ -1,0 +1,9 @@
+usar todas de "motor_mazmorra.jasb"
+clase A
+    entero n
+fin_clase
+principal
+    entero x
+    x = mm_escala_evento(1, 2)
+    imprimir x
+fin_principal

@@ -1,0 +1,33 @@
+# Demo: sintaxis cercana a Express (express, app_get, app_listen, res_json, req_param).
+# Jasboot no tiene app.metodo ni (req,res)=> ; se usa guion bajo: app_get, app_use, etc.
+#
+# CWD = esta carpeta. Ej.: jbc rapido_demo.jasb && jasboot-ir-vm rapido_demo.jbo
+
+usar todas de "..\\..\\stdlib\\rapido\\rapido.jasb"
+
+funcion demo_inicio(texto sol) retorna texto
+    retornar res_json("{\"mensaje\":\"API funcionando\"}")
+fin_funcion
+
+funcion demo_saludo(texto sol) retorna texto
+    texto nombre = req_param("nombre")
+    texto cuerpo = "{\"mensaje\":\"Hola, "
+    cuerpo = concatenar(cuerpo, nombre)
+    cuerpo = concatenar(cuerpo, "!\"}")
+    retornar res_json(cuerpo)
+fin_funcion
+
+principal
+    entero puerto = 3000
+    si sys_argc() >= 3 entonces
+        puerto = str_a_entero(sys_argv(2))
+    fin_si
+    express()
+    express_cors()
+    express_json()
+    app_get("/", demo_inicio)
+    app_get("/saludo/:nombre", demo_saludo)
+    imprimir "rapido (estilo Express) http://127.0.0.1:"
+    imprimir str_desde_numero(puerto)
+    app_listen(puerto)
+fin_principal

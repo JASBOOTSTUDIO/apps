@@ -1,0 +1,76 @@
+# Mutaciones: reconstruir líneas, borrar por id, guardar blob completo.
+usar todas de "const.jasb"
+
+enviar funcion crud_archivo_sin_id(entero id_borrar) retorna texto
+    texto salida = ""
+    texto arch = crud_arch_resolver()
+    si existe_archivo(arch) == 0 entonces
+        retornar salida
+    fin_si
+    entero fh = abrir_archivo(arch, "r")
+    mientras 1 hacer
+        texto ln = leer_linea_archivo(fh)
+        si longitud(ln) == 0 entonces
+            entero fe3 = fin_archivo(fh)
+            si fe3 == 1 entonces
+                romper
+            fin_si
+            continuar
+        fin_si
+        lista cam = dividir_texto(ln, CRUD_SEP)
+        entero eid = str_a_entero(mem_lista_obtener(cam, 0))
+        si eid != id_borrar entonces
+            si longitud(salida) > 0 entonces
+                salida = concatenar(salida, "\n")
+            fin_si
+            salida = concatenar(salida, ln)
+        fin_si
+    fin_mientras
+    cerrar_archivo(fh)
+    retornar salida
+fin_funcion
+
+enviar funcion crud_reemplazar_linea(entero id_editar, texto nuevo_tit, texto nuevo_det) retorna texto
+    texto salida = ""
+    texto arch = crud_arch_resolver()
+    si existe_archivo(arch) == 0 entonces
+        retornar salida
+    fin_si
+    entero fh = abrir_archivo(arch, "r")
+    mientras 1 hacer
+        texto ln = leer_linea_archivo(fh)
+        si longitud(ln) == 0 entonces
+            entero fe4 = fin_archivo(fh)
+            si fe4 == 1 entonces
+                romper
+            fin_si
+            continuar
+        fin_si
+        lista cam = dividir_texto(ln, CRUD_SEP)
+        entero eid = str_a_entero(mem_lista_obtener(cam, 0))
+        texto linea_usar = ln
+        si eid == id_editar entonces
+            texto idtxt = str_desde_numero(id_editar)
+            texto p1 = concatenar(idtxt, CRUD_SEP)
+            texto p2 = concatenar(p1, nuevo_tit)
+            texto p3 = concatenar(p2, CRUD_SEP)
+            linea_usar = concatenar(p3, nuevo_det)
+        fin_si
+        si longitud(salida) > 0 entonces
+            salida = concatenar(salida, "\n")
+        fin_si
+        salida = concatenar(salida, linea_usar)
+    fin_mientras
+    cerrar_archivo(fh)
+    retornar salida
+fin_funcion
+
+enviar funcion crud_guardar_texto(texto contenido) retorna entero
+    texto arch = crud_arch_resolver()
+    entero fh = abrir_archivo(arch, "wb")
+    si longitud(contenido) > 0 entonces
+        escribir_archivo(contenido, fh)
+    fin_si
+    cerrar_archivo(fh)
+    retornar 1
+fin_funcion

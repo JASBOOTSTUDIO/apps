@@ -1,0 +1,7 @@
+enviar lista<texto> G
+
+enviar funcion p_init() retorna entero
+    G = crear_lista()
+    mem_lista_agregar(G, "Ana")
+    retornar 1
+fin_funcion

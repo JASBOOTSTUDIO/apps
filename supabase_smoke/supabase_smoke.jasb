@@ -1,0 +1,24 @@
+# Prueba rapida del cliente REST Supabase (sin protocolo PG en :5432).
+# 1) Sustituye URI por el tuyo (usuario postgres.<ref> del pooler).
+# 2) Pega llave "anon" o "service_role" desde Supabase → Project Settings → API.
+# 3) Ajusta nombre de tabla existente en ?select=...
+#
+# jbc supabase_smoke.jasb && jasboot-ir-vm supabase_smoke.jbo
+
+usar todas de "..\\..\\stdlib\\supabase\\supabase_rest.jasb"
+
+principal
+    texto uri_pg = "postgresql://postgres.TU_REF_AQUI:tu_clave_bd@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+    texto llave_api = "PEGAR_SUPABASE_ANON_O_SERVICE_ROLE_JWT"
+    si supabase_configurar_desde_uri_postgres(uri_pg, llave_api) == 0 entonces
+        imprimir "Fallo: no se pudo extraer ref del URI (se espera usuario postgres.<ref>) o llave vacia."
+    sino
+        texto resp = supabase_seleccionar("paises", "?select=*&limit=2")
+        si longitud_texto(resp) == 0 entonces
+            imprimir "Sin respuesta (TLS, red o no configurado)."
+        sino
+            imprimir supabase_codigo_http(resp)
+            imprimir supabase_cuerpo(resp)
+        fin_si
+    fin_si
+fin_principal

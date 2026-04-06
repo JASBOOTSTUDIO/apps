@@ -1,0 +1,47 @@
+
+# ============================================================
+# nucleodb/src/almacenamiento/wal.jasb
+# Write-Ahead Log — registra operaciones antes de aplicarlas
+# Formato de entrada: timestamp|TIPO_OP|coleccion|id_nodo
+# ============================================================
+
+enviar constante texto WAL_INSERTAR    = "INS"
+enviar constante texto WAL_ACTUALIZAR  = "UPD"
+enviar constante texto WAL_ELIMINAR    = "DEL"
+enviar constante texto WAL_CONFIRMAR   = "COMMIT"
+enviar constante texto WAL_REVERTIR    = "ROLLBACK"
+
+enviar funcion wal_registrar(texto tipo_op, texto coleccion, texto id_nodo) retorna bool
+    entero archivo = fs_abrir("data/transacciones/registro.wal", "a")
+    si archivo == 0 entonces
+        retornar falso
+    fin_si
+    texto ts = str_desde_numero(obtener_timestamp())
+    texto linea = ts + "|" + tipo_op + "|" + coleccion + "|" + id_nodo + "\n"
+    fs_escribir(linea, archivo)
+    fs_cerrar(archivo)
+    retornar verdadero
+fin_funcion
+
+enviar funcion wal_leer_pendientes() retorna lista
+    lista ops = mem_lista_crear()
+    si no existe_archivo("data/transacciones/registro.wal") entonces
+        retornar ops
+    fin_si
+    entero archivo = fs_abrir("data/transacciones/registro.wal", "r")
+    si archivo == 0 entonces
+        retornar ops
+    fin_si
+    mientras no fin_archivo(archivo) hacer
+        texto linea = fs_leer_linea(archivo)
+        si longitud_texto(linea) > 0 entonces
+            mem_lista_agregar(ops, linea)
+        fin_si
+    fin_mientras
+    fs_cerrar(archivo)
+    retornar ops
+fin_funcion
+
+enviar funcion wal_existe() retorna bool
+    retornar existe_archivo("data/transacciones/registro.wal")
+fin_funcion

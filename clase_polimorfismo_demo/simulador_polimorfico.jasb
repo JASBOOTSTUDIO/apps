@@ -1,0 +1,247 @@
+# Simulador de mazmorra: clases, extiende (2 niveles), polimorfismo por campo `funcion`,
+# vec2 (posicion y distancia euclidiana), listas texto, mapa, seleccionar, mientras, modulo `usar`.
+#
+# Nota de robustez del compilador: en la jerarquia con `funcion`, no poner en la MISMA clase base
+# campos `entero` y `texto` mezclados antes de `funcion` (p. ej. vitalidad+nombre en Entidad) —
+# en jbc actual puede provocar fallo del compilador; `vitalidad` va en cada subclase.
+#
+# CWD: esta carpeta. jb simulador_polimorfico.jasb
+
+usar todas de "motor_mazmorra.jasb"
+
+clase Entidad
+    entero id
+    texto nombre_pub
+    funcion reaccionar
+fin_clase
+
+clase Jugador extiende Entidad
+    entero vitalidad
+    vec2 pos
+    entero xp
+    entero rango
+fin_clase
+
+clase Monstruo extiende Entidad
+    entero vitalidad
+    entero furia
+    vec2 pos
+fin_clase
+
+clase Tesoro extiende Entidad
+    entero vitalidad
+    entero monedas
+    entero ya_loot
+fin_clase
+
+clase Trampa extiende Tesoro
+    entero penal_hp
+fin_clase
+
+entero oro_mundo
+entero g_ronda
+lista<texto> g_bit
+mapa tabla_buff
+Jugador g_heroe
+Monstruo m_orco
+Monstruo m_baba
+Tesoro cofre_oro
+Trampa hoyo_trampa
+
+funcion heroe_equilibrio(entero ev) retorna entero
+    entero cura
+    cura = mm_escala_evento(2, g_ronda)
+    g_heroe.vitalidad = mm_clamp_vida(g_heroe.vitalidad + cura, 130)
+    g_heroe.xp = g_heroe.xp + 2
+    mem_lista_agregar(g_bit, mm_texto_evento(g_heroe.nombre_pub, ev))
+    retornar g_heroe.vitalidad
+fin_funcion
+
+funcion orco_fiero(entero ev) retorna entero
+    entero golpe
+    golpe = mm_escala_evento(3 + m_orco.furia, g_ronda)
+    g_heroe.vitalidad = mm_clamp_vida(g_heroe.vitalidad - golpe, 130)
+    m_orco.furia = m_orco.furia + 2
+    mem_lista_agregar(g_bit, mm_texto_evento(m_orco.nombre_pub, ev))
+    retornar golpe
+fin_funcion
+
+funcion baba_calma(entero ev) retorna entero
+    m_baba.furia = m_baba.furia - 1
+    si m_baba.furia < 0 entonces
+        m_baba.furia = 0
+    fin_si
+    g_heroe.vitalidad = mm_clamp_vida(g_heroe.vitalidad + 2, 130)
+    mem_lista_agregar(g_bit, mm_texto_evento(m_baba.nombre_pub, ev))
+    retornar 0
+fin_funcion
+
+funcion baba_encoleriza(entero ev) retorna entero
+    entero d
+    d = mm_escala_evento(5 + m_baba.furia, g_ronda)
+    g_heroe.vitalidad = mm_clamp_vida(g_heroe.vitalidad - d, 130)
+    m_baba.furia = m_baba.furia + 3
+    mem_lista_agregar(g_bit, mm_texto_evento(m_baba.nombre_pub, ev))
+    retornar d
+fin_funcion
+
+funcion cofre_donar(entero ev) retorna entero
+    si cofre_oro.ya_loot == 0 entonces
+        cofre_oro.ya_loot = 1
+        oro_mundo = oro_mundo + cofre_oro.monedas
+        mem_lista_agregar(g_bit, mm_texto_evento(cofre_oro.nombre_pub, ev))
+    fin_si
+    retornar oro_mundo
+fin_funcion
+
+funcion trampa_activar(entero ev) retorna entero
+    g_heroe.vitalidad = mm_clamp_vida(g_heroe.vitalidad - hoyo_trampa.penal_hp, 130)
+    hoyo_trampa.ya_loot = 1
+    mem_lista_agregar(g_bit, mm_texto_evento(hoyo_trampa.nombre_pub, ev))
+    retornar hoyo_trampa.penal_hp
+fin_funcion
+
+funcion dist_orco_heroe() retorna flotante
+    vec2 delta
+    delta = m_orco.pos - g_heroe.pos
+    retornar vec2_longitud(delta)
+fin_funcion
+
+principal
+    texto clave_fase
+    texto clave_vel
+    entero r
+    entero idx
+    flotante dist_e
+    vec2 p_ini
+    vec2 p_orco
+    vec2 p_baba
+    vec2 paso_heroe
+    funcion rf1
+    funcion rf2
+    funcion rf3
+    funcion rf4
+    funcion rf5
+    funcion rf6
+    funcion dyn_run
+
+    g_bit = crear_lista()
+    tabla_buff = mapa_crear()
+    clave_fase = "fase"
+    clave_vel = "vel"
+    mapa_poner(tabla_buff, clave_fase, 0)
+    mapa_poner(tabla_buff, clave_vel, 1)
+
+    oro_mundo = 0
+    g_ronda = 1
+
+    g_heroe.id = 1
+    g_heroe.vitalidad = 80
+    g_heroe.nombre_pub = "Lyra"
+    p_ini = vec2(0.0, 0.0)
+    g_heroe.pos = p_ini
+    g_heroe.xp = 0
+    g_heroe.rango = 1
+    rf1 = heroe_equilibrio
+    g_heroe.reaccionar = rf1
+
+    m_orco.id = 2
+    m_orco.vitalidad = 40
+    m_orco.nombre_pub = "Orco bravo"
+    m_orco.furia = 1
+    p_orco = vec2(4.0, 0.0)
+    m_orco.pos = p_orco
+    rf2 = orco_fiero
+    m_orco.reaccionar = rf2
+
+    m_baba.id = 3
+    m_baba.vitalidad = 25
+    m_baba.nombre_pub = "Baba viscosa"
+    m_baba.furia = 2
+    p_baba = vec2(0.0, 3.0)
+    m_baba.pos = p_baba
+    rf3 = baba_calma
+    m_baba.reaccionar = rf3
+
+    cofre_oro.id = 4
+    cofre_oro.vitalidad = 1
+    cofre_oro.nombre_pub = "Cofre ribeteado"
+    cofre_oro.monedas = 50
+    cofre_oro.ya_loot = 0
+    rf4 = cofre_donar
+    cofre_oro.reaccionar = rf4
+
+    hoyo_trampa.id = 5
+    hoyo_trampa.vitalidad = 1
+    hoyo_trampa.nombre_pub = "Loseta falsa"
+    hoyo_trampa.monedas = 0
+    hoyo_trampa.ya_loot = 0
+    hoyo_trampa.penal_hp = 12
+    rf5 = trampa_activar
+    hoyo_trampa.reaccionar = rf5
+
+    imprimir "=== Mazmorra polimorfica (Jasboot) ==="
+    imprimir ""
+
+    mientras g_ronda <= 8 hacer
+        imprimir concatenar("--- Ronda ", str_desde_numero(g_ronda))
+
+        seleccionar g_ronda % 3 hacer
+            caso 0
+                mapa_poner(tabla_buff, clave_fase, 0)
+                imprimir "Fase: exploracion"
+            caso 1, 2
+                mapa_poner(tabla_buff, clave_fase, 1)
+                imprimir "Fase: presion"
+            defecto
+                imprimir "Fase: ?"
+        fin_seleccionar
+
+        si g_ronda == 4 entonces
+            imprimir "[plot] La baba muta su comportamiento (polimorfismo en caliente)."
+            rf6 = baba_encoleriza
+            m_baba.reaccionar = rf6
+        fin_si
+
+        dist_e = dist_orco_heroe()
+        imprimir_sin_salto "Distancia orco-heroe (euclides): "
+        imprimir_flotante(dist_e)
+        imprimir ""
+
+        dyn_run = g_heroe.reaccionar
+        r = dyn_run(g_ronda)
+        dyn_run = m_orco.reaccionar
+        r = dyn_run(g_ronda)
+        dyn_run = m_baba.reaccionar
+        r = dyn_run(g_ronda)
+        dyn_run = cofre_oro.reaccionar
+        r = dyn_run(g_ronda)
+        dyn_run = hoyo_trampa.reaccionar
+        r = dyn_run(g_ronda)
+
+        paso_heroe = vec2(0.5, 0.25)
+        g_heroe.pos = g_heroe.pos + paso_heroe
+
+        si g_heroe.vitalidad <= 0 entonces
+            imprimir "!!! Heroe caido. Fin anticipado."
+            romper
+        fin_si
+
+        g_ronda = g_ronda + 1
+    fin_mientras
+
+    imprimir ""
+    imprimir "=== Bitacora (para_cada) ==="
+    idx = 0
+    para_cada texto linea sobre g_bit hacer
+        idx = idx + 1
+        imprimir concatenar(str_desde_numero(idx), concatenar(". ", linea))
+    fin_para_cada
+
+    imprimir ""
+    imprimir "=== Resultado ==="
+    imprimir concatenar("Oro: ", str_desde_numero(oro_mundo))
+    imprimir concatenar("XP heroe: ", str_desde_numero(g_heroe.xp))
+    imprimir concatenar("Vida final: ", str_desde_numero(g_heroe.vitalidad))
+    imprimir "Fin."
+fin_principal

@@ -1,0 +1,13 @@
+principal
+    si 1 == 1 o 1 == 0 entonces
+        imprimir "OR FUNCIONA"
+    sino
+        imprimir "OR ROTO"
+    fin_si
+    
+    si contiene_texto("node.exe", ".exe") == 1 o contiene_texto("node.exe", ".EXE") == 1 entonces
+        imprimir "OR FUNCIONA 2"
+    sino
+        imprimir "OR ROTO 2"
+    fin_si
+fin_principal

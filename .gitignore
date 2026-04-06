@@ -1,0 +1,14 @@
+
+
+*.jbo
+*.jmn
+*.log
+*.tmp
+*.tmpdir
+*.tsv
+*.txt
+*.env
+
+node_modules/
+bench/
+

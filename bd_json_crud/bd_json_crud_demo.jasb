@@ -1,0 +1,167 @@
+# BD JSON interactiva (consola). Nucleo: bd_json_core.jasb
+# CWD = esta carpeta. Get-Content demo_stdin.txt | jasboot-ir-vm.exe --continuo bd_json_crud_demo.jbo
+
+usar todas de "bd_json_core.jasb"
+
+principal
+    texto ruta = "bd_demo.json"
+    mientras 1 hacer
+        texto raw = bd_cargar(ruta)
+        limpiar_consola
+        entero doc0 = json_parse(raw)
+        texto nom_act = json_a_texto(json_objeto_obtener(doc0, "current"))
+        imprimir "=== BD JSON (colecciones dinámicas) ==="
+        imprimir ruta
+        texto sub = "Colección activa: "
+        sub = concatenar(sub, nom_act)
+        imprimir sub
+        imprimir "1 Crear fila      | 2 Listar tabla   | 3 Ver por id"
+        imprimir "4 Editar fila     | 5 Borrar fila    | 6 Nueva colección"
+        imprimir "7 Elegir colección| 8 Añadir columna | 9 Esquema (cols)"
+        imprimir "A Listar colecciones"
+        imprimir "0 Salir"
+        imprimir ""
+        imprimir_sin_salto "Opcion: "
+        ingresar_texto opcion
+        si longitud(opcion) == 0 entonces
+            imprimir "(fin de entrada — saliendo)"
+            romper
+        fin_si
+        si opcion == "0" entonces
+            imprimir "Hasta luego."
+            romper
+        fin_si
+        si opcion == "1" entonces
+            entero doc = json_parse(raw)
+            entero colls = json_objeto_obtener(doc, "collections")
+            entero cix = bd_idx_coleccion_actual(doc)
+            entero coll = json_lista_obtener(colls, cix)
+            entero cols = json_objeto_obtener(coll, "columns")
+            entero next_id = json_a_entero(json_objeto_obtener(coll, "nextId"))
+            entero ncols = json_lista_tamano(cols)
+            si ncols == 0 entonces
+                imprimir "No hay columnas. Use 8 para definir al menos una."
+            sino
+                texto fila_str = bd_construir_fila_desde_entrada(cols, next_id)
+                raw = bd_agregar_fila_doc(raw, fila_str)
+                bd_guardar(ruta, raw)
+                imprimir "Guardado (alta)."
+            fin_si
+        fin_si
+        si opcion == "2" entonces
+            bd_imprimir_tabla(raw)
+        fin_si
+        si opcion == "3" entonces
+            imprimir "Id a consultar:"
+            ingresar_texto sid_v
+            entero vid = str_a_entero(sid_v)
+            si bd_existe_id(raw, vid) == 0 entonces
+                imprimir "(no hay fila con ese id)"
+            sino
+                bd_imprimir_ficha(raw, vid)
+            fin_si
+        fin_si
+        si opcion == "4" entonces
+            imprimir "Id a editar:"
+            ingresar_texto sid_e
+            entero eid = str_a_entero(sid_e)
+            si bd_existe_id(raw, eid) == 0 entonces
+                imprimir "(no existe ese id)"
+            sino
+                entero doc = json_parse(raw)
+                entero colls = json_objeto_obtener(doc, "collections")
+                entero cix = bd_idx_coleccion_actual(doc)
+                entero coll = json_lista_obtener(colls, cix)
+                entero cols = json_objeto_obtener(coll, "columns")
+                entero items_h = json_objeto_obtener(coll, "items")
+                entero t = json_lista_tamano(items_h)
+                entero ii = 0
+                entero elem_e = json_lista_obtener(items_h, 0)
+                mientras ii < t hacer
+                    entero el = json_lista_obtener(items_h, ii)
+                    si json_a_entero(json_objeto_obtener(el, "id")) == eid entonces
+                        elem_e = el
+                    fin_si
+                    ii = ii + 1
+                fin_mientras
+                texto nueva_f = bd_construir_fila_editar(elem_e, cols)
+                raw = bd_actualizar_fila(raw, eid, nueva_f)
+                bd_guardar(ruta, raw)
+                imprimir "Actualizado."
+            fin_si
+        fin_si
+        si opcion == "5" entonces
+            imprimir "Id a borrar:"
+            ingresar_texto sid_b
+            entero bid = str_a_entero(sid_b)
+            si bd_existe_id(raw, bid) == 0 entonces
+                imprimir "(no existe ese id)"
+            sino    
+                raw = bd_borrar_fila(raw, bid)
+                bd_guardar(ruta, raw)
+                imprimir "Borrado."
+            fin_si
+        fin_si
+        si opcion == "6" entonces
+            imprimir "Nombre de la nueva colección (sin espacios raros):"
+            ingresar_texto ncoll
+            si longitud(ncoll) == 0 entonces
+                imprimir "(cancelado)"
+            sino
+                texto nueva = "{\"name\":\""
+                nueva = concatenar(nueva, bd_esc_json(ncoll))
+                nueva = concatenar(nueva, "\",\"nextId\":1,\"columns\":[],\"items\":[]}")
+                entero doc = json_parse(raw)
+                entero colls = json_objeto_obtener(doc, "collections")
+                texto arr = bd_collections_agregar_final(colls, nueva)
+                raw = bd_doc_construir_v2(ncoll, arr)
+                bd_guardar(ruta, raw)
+                imprimir "Colección creada y activa."
+            fin_si
+        fin_si
+        si opcion == "7" entonces
+            bd_listar_colecciones(raw)
+            imprimir "Nombre de la colección a activar:"
+            ingresar_texto nact
+            si longitud(nact) == 0 entonces
+                imprimir "(cancelado)"
+            sino
+                raw = bd_raiz_fijar_actual(raw, nact)
+                bd_guardar(ruta, raw)
+                imprimir "Colección activa actualizada."
+            fin_si
+        fin_si
+        si opcion == "8" entonces
+            imprimir "Nombre interno de la columna (ej: email, telefono, meta):"
+            ingresar_texto ncol
+            si longitud(ncol) == 0 entonces
+                imprimir "(cancelado)"
+            sino
+                imprimir "Tipo: 1=texto  2=json (objetos/arrays anidados)"
+                ingresar_texto tok
+                texto kind = "texto"
+                si tok == "2" entonces
+                    kind = "json"
+                fin_si
+                raw = bd_doc_agregar_columna_y_backfill(raw, ncol, kind)
+                bd_guardar(ruta, raw)
+                imprimir "Columna añadida (filas existentes rellenadas con valor por defecto)."
+            fin_si
+        fin_si
+        si opcion == "9" entonces
+            bd_listar_columnas(raw)
+        fin_si
+        si opcion == "A" entonces
+            bd_listar_colecciones(raw)
+        fin_si
+        si opcion == "a" entonces
+            bd_listar_colecciones(raw)
+        fin_si
+        imprimir ""
+        imprimir "Enter para continuar..."
+        ingresar_texto pausa_vuelta
+        si contiene_texto(pausa_vuelta, "<<<nunca>>>") entonces
+            imprimir ""
+        fin_si
+    fin_mientras
+fin_principal

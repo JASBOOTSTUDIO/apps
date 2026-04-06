@@ -1,0 +1,88 @@
+# API mínima para probar rapido + .env + Supabase REST.
+# CWD = esta carpeta. Copia .env.example → .env y configura.
+# Compilar: jbc rapido_api_prueba.jasb
+# Ejecutar: jasboot-ir-vm rapido_api_prueba.jbo
+#
+# API en español (modelo Express): aplicacion_* , montar_rutas / desmontar_rutas.
+# Los controladores siguen usando rapido_json / rapido_param (alias compatibles).
+
+usar {
+    api_raiz,
+    api_salud,
+    api_item_por_id,
+    api_echo_json,
+    api_saludo
+} de "controladores\\rutas_demo.jasb"
+
+usar {
+    api_supabase_estado,
+    api_supabase_muestra
+} de "controladores\\rutas_supabase.jasb"
+
+usar {
+    aplicacion_permitir_cors,
+    aplicacion_parsear_json,
+    aplicacion_obtener,
+    aplicacion_publicar,
+    aplicacion_escuchar,
+    aplicacion_escuchar_replicas,
+    montar_rutas,
+    desmontar_rutas
+} de "..\\..\\stdlib\\rapido\\rapido.jasb"
+
+principal
+    entero nenv = dotenv_cargar(".env")
+    si nenv < 0 entonces
+        imprimir "Aviso: no se encontro .env (usa .env.example como plantilla)."
+    sino
+        imprimir "Variables .env cargadas (pares):"
+        imprimir str_desde_numero(nenv)
+    fin_si
+    entero puerto = 3000
+    texto port_env = dotenv_obtener("PORT")
+    si longitud_texto(port_env) > 0 entonces
+        puerto = str_a_entero(port_env)
+    fin_si
+    si sys_argc() >= 3 entonces
+        puerto = str_a_entero(sys_argv(2))
+    fin_si
+    entero n_workers = 1
+    texto cluster_env = dotenv_obtener("RAPIDO_CLUSTER")
+    si longitud_texto(cluster_env) > 0 entonces
+        n_workers = str_a_entero(cluster_env)
+    fin_si
+    texto uri_pg = dotenv_obtener("SUPABASE_DATABASE_URL")
+    texto llave = dotenv_obtener("SUPABASE_ANON_KEY")
+    si longitud_texto(llave) == 0 entonces
+        llave = dotenv_obtener("SUPABASE_SERVICE_ROLE_KEY")
+    fin_si
+    si longitud_texto(uri_pg) > 0 y longitud_texto(llave) > 0 entonces
+        si supabase_configurar_desde_uri_postgres(uri_pg, llave) == 1 entonces
+            imprimir "Supabase REST configurado (ref desde URI + llave API)."
+        sino
+            imprimir "Aviso: no se pudo extraer ref del URI (se espera usuario postgres.<ref>)."
+        fin_si
+    sino
+        imprimir "Aviso: Supabase omitido (falta SUPABASE_DATABASE_URL o SUPABASE_ANON_KEY en .env)."
+    fin_si
+    aplicacion_permitir_cors()
+    aplicacion_parsear_json()
+    aplicacion_obtener("/", api_raiz)
+    aplicacion_obtener("/items/:id", api_item_por_id)
+    aplicacion_obtener("/saludo/:nombre", api_saludo)
+    montar_rutas("/api")
+    aplicacion_obtener("/salud", api_salud)
+    aplicacion_publicar("/echo", api_echo_json)
+    aplicacion_obtener("/supabase/estado", api_supabase_estado)
+    aplicacion_obtener("/supabase/muestra", api_supabase_muestra)
+    desmontar_rutas()
+    imprimir "rapido_api_prueba — GET / lista endpoints; curl /api/salud"
+    imprimir_sin_salto "Escuchando http://127.0.0.1:"
+    imprimir str_desde_numero(puerto)
+    si n_workers > 1 entonces
+        imprimir " (cluster: varias VM en puertos consecutivos; ver RAPIDO_CLUSTER en .env.example)"
+        aplicacion_escuchar_replicas("127.0.0.1", puerto, n_workers, 999999999)
+    sino
+        aplicacion_escuchar("127.0.0.1", puerto, 999999999)
+    fin_si
+fin_principal

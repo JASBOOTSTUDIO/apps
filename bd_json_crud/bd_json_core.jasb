@@ -1,0 +1,702 @@
+# Nucleo compartido BD JSON v2 (consola + API).
+# Colecciones dinamicas, columnas (texto | json) y filas con JSON anidado.
+# Formato archivo v2: {"version":2,"current":"nombre","collections":[{name,nextId,columns,items},...]}
+# v1 {"items":[],"nextId":n} se migra al cargar.
+# CWD = esta carpeta. Get-Content demo_stdin.txt | jasboot-ir-vm.exe --continuo bd_json_crud_demo.jbo
+
+enviar funcion bd_doc_default_v2() retorna texto
+    retornar "{\"version\":2,\"current\":\"principal\",\"collections\":[{\"name\":\"principal\",\"nextId\":1,\"columns\":[],\"items\":[]}]}"
+fin_funcion
+
+enviar funcion bd_es_doc_v2(texto raw) retorna entero
+    si contiene_texto(raw, "\"collections\"") == 1 entonces
+        retornar 1
+    fin_si
+    retornar 0
+fin_funcion
+
+enviar funcion bd_migrar_v1(texto raw) retorna texto
+    entero doc = json_parse(raw)
+    entero items = json_objeto_obtener(doc, "items")
+    entero nid = json_a_entero(json_objeto_obtener(doc, "nextId"))
+    texto items_s = json_stringify(items)
+    texto coll = "{\"name\":\"principal\",\"nextId\":"
+    coll = concatenar(coll, str_desde_numero(nid))
+    coll = concatenar(coll, ",\"columns\":[{\"name\":\"nombre\",\"kind\":\"texto\"},{\"name\":\"correo\",\"kind\":\"texto\"}],\"items\":")
+    coll = concatenar(coll, items_s)
+    coll = concatenar(coll, "}")
+    texto env = "{\"version\":2,\"current\":\"principal\",\"collections\":["
+    env = concatenar(env, coll)
+    env = concatenar(env, "]}")
+    retornar env
+fin_funcion
+
+enviar funcion bd_cargar(texto ruta) retorna texto
+    si existe_archivo(ruta) == 0 entonces
+        retornar bd_doc_default_v2()
+    fin_si
+    texto raw = fs_leer_texto(ruta)
+    si bd_es_doc_v2(raw) == 1 entonces
+        retornar raw
+    fin_si
+    retornar bd_migrar_v1(raw)
+fin_funcion
+
+enviar funcion bd_guardar(texto ruta, texto contenido) retorna entero
+    entero fh = abrir_archivo(ruta, "wb")
+    si longitud(contenido) > 0 entonces
+        escribir_archivo(contenido, fh)
+    fin_si
+    cerrar_archivo(fh)
+    retornar 1
+fin_funcion
+
+enviar funcion bd_esc_json(texto s) retorna texto
+    texto out = ""
+    entero i = 0
+    entero L = longitud(s)
+    mientras i < L hacer
+        texto ch = str_extraer_caracter(s, i)
+        entero cc = codigo_caracter(ch)
+        si cc == 34 entonces
+            out = concatenar(out, "\\\"")
+        fin_si
+        si cc == 92 entonces
+            out = concatenar(out, "\\\\")
+        fin_si
+        si cc == 10 entonces
+            out = concatenar(out, "\\n")
+        fin_si
+        si cc == 13 entonces
+            out = concatenar(out, "\\r")
+        fin_si
+        si cc == 9 entonces
+            out = concatenar(out, "\\t")
+        fin_si
+        si cc != 34 y cc != 92 y cc != 10 y cc != 13 y cc != 9 entonces
+            out = concatenar(out, ch)
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar out
+fin_funcion
+
+enviar funcion bd_doc_construir_v2(texto current_name, texto collections_array_str) retorna texto
+    texto p = "{\"version\":2,\"current\":\""
+    p = concatenar(p, bd_esc_json(current_name))
+    p = concatenar(p, "\",\"collections\":")
+    p = concatenar(p, collections_array_str)
+    p = concatenar(p, "}")
+    retornar p
+fin_funcion
+
+enviar funcion bd_idx_coleccion_actual(entero doc) retorna entero
+    texto nombre = json_a_texto(json_objeto_obtener(doc, "current"))
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero n = json_lista_tamano(colls)
+    entero i = 0
+    mientras i < n hacer
+        entero c = json_lista_obtener(colls, i)
+        si json_a_texto(json_objeto_obtener(c, "name")) == nombre entonces
+            retornar i
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar 0
+fin_funcion
+
+enviar funcion bd_json_array_anexar(texto arr_str, texto elem_json_str, entero n) retorna texto
+    si n == 0 entonces
+        texto a1 = "["
+        a1 = concatenar(a1, elem_json_str)
+        retornar concatenar(a1, "]")
+    fin_si
+    texto pref = extraer_antes_de(arr_str, "]")
+    texto pc = concatenar(pref, ",")
+    pc = concatenar(pc, elem_json_str)
+    retornar concatenar(pc, "]")
+fin_funcion
+
+enviar funcion bd_collections_reemplazar_idx(entero colls, entero idx, texto nuevo_coll_str) retorna texto
+    entero n = json_lista_tamano(colls)
+    texto acc = "["
+    entero need = 0
+    entero i = 0
+    mientras i < n hacer
+        si need == 1 entonces
+            acc = concatenar(acc, ",")
+        fin_si
+        need = 1
+        si i == idx entonces
+            acc = concatenar(acc, nuevo_coll_str)
+        sino
+            acc = concatenar(acc, json_stringify(json_lista_obtener(colls, i)))
+        fin_si
+        i = i + 1
+    fin_mientras
+    acc = concatenar(acc, "]")
+    retornar acc
+fin_funcion
+
+enviar funcion bd_collections_agregar_final(entero colls, texto nuevo_coll_str) retorna texto
+    entero n = json_lista_tamano(colls)
+    texto acc = "["
+    entero need = 0
+    entero i = 0
+    mientras i < n hacer
+        si need == 1 entonces
+            acc = concatenar(acc, ",")
+        fin_si
+        need = 1
+        acc = concatenar(acc, json_stringify(json_lista_obtener(colls, i)))
+        i = i + 1
+    fin_mientras
+    si need == 1 entonces
+        acc = concatenar(acc, ",")
+    fin_si
+    acc = concatenar(acc, nuevo_coll_str)
+    acc = concatenar(acc, "]")
+    retornar acc
+fin_funcion
+
+enviar funcion bd_raiz_con_collections(texto raw, texto nuevo_array_str) retorna texto
+    entero doc = json_parse(raw)
+    texto cur = json_a_texto(json_objeto_obtener(doc, "current"))
+    retornar bd_doc_construir_v2(cur, nuevo_array_str)
+fin_funcion
+
+enviar funcion bd_raiz_fijar_actual(texto raw, texto nombre) retorna texto
+    entero doc = json_parse(raw)
+    texto arr = json_stringify(json_objeto_obtener(doc, "collections"))
+    retornar bd_doc_construir_v2(nombre, arr)
+fin_funcion
+
+enviar funcion bd_objeto_anexar_clave_json(texto obj_str, texto clave, texto valor_json_sin_comillas_extra) retorna texto
+    texto pref = extraer_antes_de(obj_str, "}")
+    texto r = concatenar(pref, ",\"")
+    r = concatenar(r, bd_esc_json(clave))
+    r = concatenar(r, "\":")
+    r = concatenar(r, valor_json_sin_comillas_extra)
+    r = concatenar(r, "}")
+    retornar r
+fin_funcion
+
+enviar funcion bd_valor_columna_a_json(texto kind, texto linea) retorna texto
+    si kind == "json" entonces
+        si longitud(linea) == 0 entonces
+            retornar "null"
+        fin_si
+        entero j = json_parse(linea)
+        retornar json_stringify(j)
+    fin_si
+    texto r = "\""
+    r = concatenar(r, bd_esc_json(linea))
+    r = concatenar(r, "\"")
+    retornar r
+fin_funcion
+
+enviar funcion bd_valor_a_celda(entero vh) retorna texto
+    entero t = json_tipo(vh)
+    si t == 4 entonces
+        retornar json_a_texto(vh)
+    fin_si
+    si t == 2 entonces
+        retornar str_desde_numero(json_a_entero(vh))
+    fin_si
+    si t == 3 entonces
+        retornar bd_celda(json_stringify(vh), 28)
+    fin_si
+    si t == 1 entonces
+        si json_a_bool(vh) == 1 entonces
+            retornar "true"
+        fin_si
+        retornar "false"
+    fin_si
+    si t == 0 entonces
+        retornar "null"
+    fin_si
+    texto js = json_stringify(vh)
+    retornar bd_celda(js, 28)
+fin_funcion
+
+enviar funcion bd_celda(texto s, entero ancho) retorna texto
+    entero L = longitud(s)
+    si L > ancho entonces
+        si ancho < 4 entonces
+            retornar extraer_subtexto(s, 0, ancho)
+        fin_si
+        texto t1 = extraer_subtexto(s, 0, ancho - 3)
+        retornar concatenar(t1, "...")
+    fin_si
+    texto esp = ""
+    entero falt = ancho - L
+    mientras falt > 0 hacer
+        esp = concatenar(esp, " ")
+        falt = falt - 1
+    fin_mientras
+    retornar concatenar(s, esp)
+fin_funcion
+
+enviar funcion bd_items_anexar_fila(texto items_str, texto fila_str, entero n) retorna texto
+    si n == 0 entonces
+        texto a1 = "["
+        a1 = concatenar(a1, fila_str)
+        retornar concatenar(a1, "]")
+    fin_si
+    texto pref = extraer_antes_de(items_str, "]")
+    texto pc = concatenar(pref, ",")
+    pc = concatenar(pc, fila_str)
+    retornar concatenar(pc, "]")
+fin_funcion
+
+enviar funcion bd_existe_id_en_items(entero items_h, entero buscar) retorna entero
+    entero t = json_lista_tamano(items_h)
+    entero i = 0
+    mientras i < t hacer
+        entero elem = json_lista_obtener(items_h, i)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        si eid == buscar entonces
+            retornar 1
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar 0
+fin_funcion
+
+enviar funcion bd_existe_id(texto raw, entero buscar) retorna entero
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero ix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, ix)
+    entero items_h = json_objeto_obtener(coll, "items")
+    retornar bd_existe_id_en_items(items_h, buscar)
+fin_funcion
+
+enviar funcion bd_imprimir_tabla(texto raw) retorna entero
+    entero doc = json_parse(raw)
+    texto cname = json_a_texto(json_objeto_obtener(doc, "current"))
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero ix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, ix)
+    entero nid = json_a_entero(json_objeto_obtener(coll, "nextId"))
+    entero cols = json_objeto_obtener(coll, "columns")
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero nc = json_lista_tamano(cols)
+    entero t = json_lista_tamano(items_h)
+    texto tit = "\e[1;35mâ”€â”€ ColecciÃ³n \e[0m\e[1;33m"
+    tit = concatenar(tit, bd_celda(cname, 24))
+    tit = concatenar(tit, "\e[0m \e[2;37m(nextId=\e[0m\e[1;33m")
+    tit = concatenar(tit, str_desde_numero(nid))
+    imprimir concatenar(tit, "\e[0m\e[2;37m)\e[0m")
+    imprimir_sin_salto "\e[36m+------+"
+    entero ci = 0
+    mientras ci < nc hacer
+        imprimir_sin_salto "-----------------------------+"
+        ci = ci + 1
+    fin_mientras
+    imprimir ""
+    texto hdr = "\e[1;36m|  id  |"
+    ci = 0
+    mientras ci < nc hacer
+        entero cdef = json_lista_obtener(cols, ci)
+        texto cn = json_a_texto(json_objeto_obtener(cdef, "name"))
+        texto ck = json_a_texto(json_objeto_obtener(cdef, "kind"))
+        texto lab = bd_celda(concatenar(concatenar(cn, ":"), ck), 28)
+        hdr = concatenar(hdr, " ")
+        hdr = concatenar(hdr, lab)
+        hdr = concatenar(hdr, " |")
+        ci = ci + 1
+    fin_mientras
+    imprimir hdr
+    imprimir_sin_salto "\e[36m+------+"
+    ci = 0
+    mientras ci < nc hacer
+        imprimir_sin_salto "-----------------------------+"
+        ci = ci + 1
+    fin_mientras
+    imprimir ""
+    si t == 0 entonces
+        imprimir "\e[2;37m  (sin filas)\e[0m"
+        retornar 1
+    fin_si
+    entero j = 0
+    mientras j < t hacer
+        entero elem = json_lista_obtener(items_h, j)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        texto rowc
+        si (j % 2) == 0 entonces
+            rowc = "\e[37m"
+        sino
+            rowc = "\e[2;36m"
+        fin_si
+        texto fila = rowc
+        fila = concatenar(fila, "| ")
+        fila = concatenar(fila, bd_celda(str_desde_numero(eid), 6))
+        fila = concatenar(fila, " |")
+        entero k = 0
+        mientras k < nc hacer
+            entero cdef = json_lista_obtener(cols, k)
+            texto ckname = json_a_texto(json_objeto_obtener(cdef, "name"))
+            entero vh = json_objeto_obtener(elem, ckname)
+            texto cel = bd_valor_a_celda(vh)
+            fila = concatenar(fila, " ")
+            fila = concatenar(fila, bd_celda(cel, 28))
+            fila = concatenar(fila, " |")
+            k = k + 1
+        fin_mientras
+        fila = concatenar(fila, "\e[0m")
+        imprimir fila
+        j = j + 1
+    fin_mientras
+    imprimir_sin_salto "\e[36m+------+"
+    ci = 0
+    mientras ci < nc hacer
+        imprimir_sin_salto "-----------------------------+"
+        ci = ci + 1
+    fin_mientras
+    imprimir ""
+    retornar 1
+fin_funcion
+
+enviar funcion bd_imprimir_ficha(texto raw, entero vid) retorna entero
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero ix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, ix)
+    entero cols = json_objeto_obtener(coll, "columns")
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero t = json_lista_tamano(items_h)
+    entero i = 0
+    mientras i < t hacer
+        entero elem = json_lista_obtener(items_h, i)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        si eid == vid entonces
+            imprimir "\e[36m+------------------------------------------+\e[0m"
+            imprimir "\e[1;35m|            Ficha (detalle)               |\e[0m"
+            imprimir "\e[36m+------------------------------------------+\e[0m"
+            texto l0 = "\e[1;33m  id \e[0m\e[37m"
+            l0 = concatenar(l0, str_desde_numero(eid))
+            imprimir l0
+            entero nc = json_lista_tamano(cols)
+            entero j = 0
+            mientras j < nc hacer
+                entero cdef = json_lista_obtener(cols, j)
+                texto cn = json_a_texto(json_objeto_obtener(cdef, "name"))
+                entero vh = json_objeto_obtener(elem, cn)
+                texto det = json_stringify(vh, 2)
+                texto lj = "\e[1;33m  "
+                lj = concatenar(lj, cn)
+                lj = concatenar(lj, " \e[0m")
+                imprimir lj
+                imprimir det
+                j = j + 1
+            fin_mientras
+            imprimir "\e[36m+------------------------------------------+\e[0m"
+            retornar 1
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar 0
+fin_funcion
+
+enviar funcion bd_borrar_fila(texto raw, entero idx_borrar) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero cix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, cix)
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero t = json_lista_tamano(items_h)
+    si t == 0 entonces
+        retornar raw
+    fin_si
+    si t == 1 entonces
+        entero solo = json_lista_obtener(items_h, 0)
+        entero e0 = json_a_entero(json_objeto_obtener(solo, "id"))
+        si e0 == idx_borrar entonces
+            texto coll_new_s = bd_coleccion_reemplazar_items(coll, "[]")
+            texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new_s)
+            retornar bd_raiz_con_collections(raw, arr)
+        fin_si
+        retornar raw
+    fin_si
+    si t == 2 entonces
+        entero elem0 = json_lista_obtener(items_h, 0)
+        entero elem1 = json_lista_obtener(items_h, 1)
+        entero e0 = json_a_entero(json_objeto_obtener(elem0, "id"))
+        entero e1 = json_a_entero(json_objeto_obtener(elem1, "id"))
+        texto coll_new_s
+        si idx_borrar == e0 entonces
+            texto c1 = json_stringify(elem1)
+            texto a1 = "["
+            a1 = concatenar(a1, c1)
+            coll_new_s = bd_coleccion_reemplazar_items(coll, concatenar(a1, "]"))
+            texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new_s)
+            retornar bd_raiz_con_collections(raw, arr)
+        fin_si
+        si idx_borrar == e1 entonces
+            texto c0 = json_stringify(elem0)
+            texto a0 = "["
+            a0 = concatenar(a0, c0)
+            coll_new_s = bd_coleccion_reemplazar_items(coll, concatenar(a0, "]"))
+            texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new_s)
+            retornar bd_raiz_con_collections(raw, arr)
+        fin_si
+        retornar raw
+    fin_si
+    entero i = 0
+    texto acc = "["
+    entero need_comma = 0
+    mientras i < t hacer
+        entero elem = json_lista_obtener(items_h, i)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        si eid != idx_borrar entonces
+            texto chunk = json_stringify(elem)
+            si need_comma == 1 entonces
+                acc = concatenar(acc, ",")
+            fin_si
+            acc = concatenar(acc, chunk)
+            need_comma = 1
+        fin_si
+        i = i + 1
+    fin_mientras
+    acc = concatenar(acc, "]")
+    texto coll_new_s = bd_coleccion_reemplazar_items(coll, acc)
+    texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new_s)
+    retornar bd_raiz_con_collections(raw, arr)
+fin_funcion
+
+enviar funcion bd_coleccion_reemplazar_items(entero coll, texto items_json_str) retorna texto
+    texto cname = json_a_texto(json_objeto_obtener(coll, "name"))
+    entero nid = json_a_entero(json_objeto_obtener(coll, "nextId"))
+    texto cols_s = json_stringify(json_objeto_obtener(coll, "columns"))
+    texto out = "{\"name\":\""
+    out = concatenar(out, bd_esc_json(cname))
+    out = concatenar(out, "\",\"nextId\":")
+    out = concatenar(out, str_desde_numero(nid))
+    out = concatenar(out, ",\"columns\":")
+    out = concatenar(out, cols_s)
+    out = concatenar(out, ",\"items\":")
+    out = concatenar(out, items_json_str)
+    out = concatenar(out, "}")
+    retornar out
+fin_funcion
+
+enviar funcion bd_actualizar_fila(texto raw, entero idx_editar, texto nueva_fila_str) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero cix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, cix)
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero t = json_lista_tamano(items_h)
+    entero i = 0
+    texto acc = "["
+    entero need_comma = 0
+    mientras i < t hacer
+        entero elem = json_lista_obtener(items_h, i)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        texto chunk
+        si eid == idx_editar entonces
+            chunk = nueva_fila_str
+        sino
+            chunk = json_stringify(elem)
+        fin_si
+        si need_comma == 1 entonces
+            acc = concatenar(acc, ",")
+        fin_si
+        acc = concatenar(acc, chunk)
+        need_comma = 1
+        i = i + 1
+    fin_mientras
+    acc = concatenar(acc, "]")
+    texto coll_new_s = bd_coleccion_reemplazar_items(coll, acc)
+    texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new_s)
+    retornar bd_raiz_con_collections(raw, arr)
+fin_funcion
+
+enviar funcion bd_agregar_fila_doc(texto raw, texto fila_obj_str) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero cix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, cix)
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero idx = json_a_entero(json_objeto_obtener(coll, "nextId"))
+    texto items_str = json_stringify(items_h)
+    entero n = json_lista_tamano(items_h)
+    texto nuevo_items = bd_items_anexar_fila(items_str, fila_obj_str, n)
+    texto cname = json_a_texto(json_objeto_obtener(coll, "name"))
+    texto cols_s = json_stringify(json_objeto_obtener(coll, "columns"))
+    texto coll_new = "{\"name\":\""
+    coll_new = concatenar(coll_new, bd_esc_json(cname))
+    coll_new = concatenar(coll_new, "\",\"nextId\":")
+    coll_new = concatenar(coll_new, str_desde_numero(idx + 1))
+    coll_new = concatenar(coll_new, ",\"columns\":")
+    coll_new = concatenar(coll_new, cols_s)
+    coll_new = concatenar(coll_new, ",\"items\":")
+    coll_new = concatenar(coll_new, nuevo_items)
+    coll_new = concatenar(coll_new, "}")
+    texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new)
+    retornar bd_raiz_con_collections(raw, arr)
+fin_funcion
+
+enviar funcion bd_construir_fila_desde_entrada(entero cols, entero next_id) retorna texto
+    texto row = "{\"id\":"
+    row = concatenar(row, str_desde_numero(next_id))
+    entero nc = json_lista_tamano(cols)
+    entero ci = 0
+    mientras ci < nc hacer
+        entero cdef = json_lista_obtener(cols, ci)
+        texto cname = json_a_texto(json_objeto_obtener(cdef, "name"))
+        texto ckind = json_a_texto(json_objeto_obtener(cdef, "kind"))
+        texto p1 = "  "
+        p1 = concatenar(p1, cname)
+        p1 = concatenar(p1, " (")
+        p1 = concatenar(p1, ckind)
+        imprimir concatenar(p1, "):")
+        ingresar_texto val_in
+        texto frag = bd_valor_columna_a_json(ckind, val_in)
+        row = concatenar(row, ",\"")
+        row = concatenar(row, bd_esc_json(cname))
+        row = concatenar(row, "\":")
+        row = concatenar(row, frag)
+        ci = ci + 1
+    fin_mientras
+    row = concatenar(row, "}")
+    retornar row
+fin_funcion
+
+enviar funcion bd_construir_fila_editar(entero elem, entero cols) retorna texto
+    entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+    texto row = "{\"id\":"
+    row = concatenar(row, str_desde_numero(eid))
+    entero nc = json_lista_tamano(cols)
+    entero ci = 0
+    mientras ci < nc hacer
+        entero cdef = json_lista_obtener(cols, ci)
+        texto cname = json_a_texto(json_objeto_obtener(cdef, "name"))
+        texto ckind = json_a_texto(json_objeto_obtener(cdef, "kind"))
+        texto prev = ""
+        entero vprev = json_objeto_obtener(elem, cname)
+        prev = json_stringify(vprev)
+        texto p1 = "  Valor actual: "
+        p1 = concatenar(p1, prev)
+        imprimir p1
+        texto p2 = "\e[0m  Nuevo "
+        p2 = concatenar(p2, cname)
+        imprimir concatenar(p2, " (Enter=mantener):")
+        ingresar_texto val_in
+        texto frag_edit
+        si longitud(val_in) == 0 entonces
+            frag_edit = prev
+        sino
+            frag_edit = bd_valor_columna_a_json(ckind, val_in)
+        fin_si
+        row = concatenar(row, ",\"")
+        row = concatenar(row, bd_esc_json(cname))
+        row = concatenar(row, "\":")
+        row = concatenar(row, frag_edit)
+        ci = ci + 1
+    fin_mientras
+    row = concatenar(row, "}")
+    retornar row
+fin_funcion
+
+enviar funcion bd_doc_agregar_columna_y_backfill(texto raw, texto col_name, texto col_kind) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero cix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, cix)
+    entero cols = json_objeto_obtener(coll, "columns")
+    entero nc = json_lista_tamano(cols)
+    texto col_def = "{\"name\":\""
+    col_def = concatenar(col_def, bd_esc_json(col_name))
+    col_def = concatenar(col_def, "\",\"kind\":\"")
+    col_def = concatenar(col_def, col_kind)
+    col_def = concatenar(col_def, "\"}")
+    texto cols_new = bd_json_array_anexar(json_stringify(cols), col_def, nc)
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero nt = json_lista_tamano(items_h)
+    texto frag_def
+    si col_kind == "texto" entonces
+        frag_def = "\"\""
+    sino
+        frag_def = "null"
+    fin_si
+    texto items_acc = "["
+    entero need = 0
+    entero ii = 0
+    mientras ii < nt hacer
+        entero el = json_lista_obtener(items_h, ii)
+        texto el_s = json_stringify(el)
+        texto el2 = bd_objeto_anexar_clave_json(el_s, col_name, frag_def)
+        si need == 1 entonces
+            items_acc = concatenar(items_acc, ",")
+        fin_si
+        need = 1
+        items_acc = concatenar(items_acc, el2)
+        ii = ii + 1
+    fin_mientras
+    items_acc = concatenar(items_acc, "]")
+    texto cname = json_a_texto(json_objeto_obtener(coll, "name"))
+    entero nid = json_a_entero(json_objeto_obtener(coll, "nextId"))
+    texto coll_new = "{\"name\":\""
+    coll_new = concatenar(coll_new, bd_esc_json(cname))
+    coll_new = concatenar(coll_new, "\",\"nextId\":")
+    coll_new = concatenar(coll_new, str_desde_numero(nid))
+    coll_new = concatenar(coll_new, ",\"columns\":")
+    coll_new = concatenar(coll_new, cols_new)
+    coll_new = concatenar(coll_new, ",\"items\":")
+    coll_new = concatenar(coll_new, items_acc)
+    coll_new = concatenar(coll_new, "}")
+    texto arr = bd_collections_reemplazar_idx(colls, cix, coll_new)
+    retornar bd_raiz_con_collections(raw, arr)
+fin_funcion
+
+enviar funcion bd_listar_colecciones(texto raw) retorna entero
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    texto cur = json_a_texto(json_objeto_obtener(doc, "current"))
+    entero n = json_lista_tamano(colls)
+    imprimir "\e[1;36mColecciones:\e[0m"
+    entero i = 0
+    mientras i < n hacer
+        entero c = json_lista_obtener(colls, i)
+        texto nm = json_a_texto(json_objeto_obtener(c, "name"))
+        texto line = "  - "
+        line = concatenar(line, nm)
+        si nm == cur entonces
+            line = concatenar(line, " \e[1;33m(activa)\e[0m")
+        fin_si
+        imprimir line
+        i = i + 1
+    fin_mientras
+    retornar 1
+fin_funcion
+
+enviar funcion bd_listar_columnas(texto raw) retorna entero
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero cix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, cix)
+    texto cnm = json_a_texto(json_objeto_obtener(coll, "name"))
+    entero cols = json_objeto_obtener(coll, "columns")
+    entero nc = json_lista_tamano(cols)
+    texto t1 = "\e[1;36mColumnas en \e[0m\e[1;33m"
+    t1 = concatenar(t1, cnm)
+    imprimir concatenar(t1, "\e[0m:")
+    entero j = 0
+    mientras j < nc hacer
+        entero cdef = json_lista_obtener(cols, j)
+        texto cn = json_a_texto(json_objeto_obtener(cdef, "name"))
+        texto ck = json_a_texto(json_objeto_obtener(cdef, "kind"))
+        texto ln = "  "
+        ln = concatenar(ln, cn)
+        ln = concatenar(ln, "  [")
+        ln = concatenar(ln, ck)
+        imprimir concatenar(ln, "]")
+        j = j + 1
+    fin_mientras
+    si nc == 0 entonces
+        imprimir "\e[2;37m  (ninguna; use opcion 8)\e[0m"
+    fin_si
+    retornar 1
+fin_funcion

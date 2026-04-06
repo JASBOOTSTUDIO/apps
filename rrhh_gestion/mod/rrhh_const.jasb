@@ -1,0 +1,6 @@
+# Constantes — ajuste rutas y límites para su empresa.
+enviar constante texto RRHH_ARCH_EMP = "RRHH_empleados.tsv"
+enviar constante texto RRHH_ARCH_NOM = "RRHH_nominas.tsv"
+enviar constante texto RRHH_SEP = "|"
+enviar constante entero RRHH_MAX_EMP = 800
+enviar constante entero RRHH_MAX_NOM = 10000

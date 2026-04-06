@@ -1,0 +1,42 @@
+# Estado global en memoria (listas, IDs, buffers de formulario).
+usar todo de "rrhh_const.jasb"
+
+enviar lista<entero> ge_ids
+enviar lista<texto> ge_noms
+enviar lista<texto> ge_docs
+enviar lista<texto> ge_deps
+enviar lista<texto> ge_cargs
+enviar lista<entero> ge_sals
+enviar lista<entero> ge_acts
+enviar entero g_next_emp_id = 1
+
+enviar lista<entero> gn_ids
+enviar lista<entero> gn_eids
+enviar lista<texto> gn_pers
+enviar lista<entero> gn_brut
+enviar lista<entero> gn_deds
+enviar lista<entero> gn_liqs
+enviar entero g_next_nom_id = 1
+
+enviar entero g_buf_sal_cent = 0
+enviar entero g_buf_bruto_cent = 0
+enviar entero g_buf_ded_cent = 0
+
+enviar funcion rrhh_init() retorna entero
+    ge_ids = crear_lista()
+    ge_noms = crear_lista()
+    ge_docs = crear_lista()
+    ge_deps = crear_lista()
+    ge_cargs = crear_lista()
+    ge_sals = crear_lista()
+    ge_acts = crear_lista()
+    gn_ids = crear_lista()
+    gn_eids = crear_lista()
+    gn_pers = crear_lista()
+    gn_brut = crear_lista()
+    gn_deds = crear_lista()
+    gn_liqs = crear_lista()
+    g_next_emp_id = 1
+    g_next_nom_id = 1
+    retornar 1
+fin_funcion

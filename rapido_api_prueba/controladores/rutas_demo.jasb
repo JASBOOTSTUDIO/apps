@@ -1,0 +1,47 @@
+# Rutas de demostracion (JSON, parametros, echo).
+
+usar {
+    rapido_json,
+    rapido_param,
+    rapido_tiene_cuerpo_json,   
+    rapido_json_codigo,
+    rapido_json_valor,
+    rapido_cuerpo_json
+} de "..\\..\\..\\stdlib\\rapido\\rapido.jasb"
+
+enviar funcion api_raiz(texto sol) retorna texto
+    imprimir "\verd[INFO]\norm Ruta raiz"
+    retornar rapido_json("{\"servicio\":\"rapido_api_prueba\",\"endpoints\":[\"GET /api/salud\",\"GET /items/:id\",\"POST /api/echo\",\"GET /saludo/:nombre\",\"GET /api/supabase/estado\",\"GET /api/supabase/muestra\"]}")
+fin_funcion
+
+enviar funcion api_salud(texto sol) retorna texto
+    imprimir "\verd[INFO]\norm Ruta salud"
+    retornar rapido_json("{\"ok\":true,\"framework\":\"rapido\"}")
+fin_funcion
+
+enviar funcion api_item_por_id(texto sol) retorna texto
+    texto id = rapido_param("id")
+    texto j = "{\"id\":\""
+    j = concatenar(j, id)
+    j = concatenar(j, "\"}")
+    imprimir "\verd[INFO]\norm Ruta item por id"
+    retornar rapido_json(j)
+fin_funcion
+
+enviar funcion api_echo_json(texto sol) retorna texto
+    si rapido_tiene_cuerpo_json() == 0 entonces
+        imprimir "\verd[INFO]\norm Esperaba JSON en el cuerpo"
+        retornar rapido_json_codigo("400 Bad Request", "{\"error\":\"esperaba JSON en el cuerpo\"}")
+    fin_si
+    imprimir "\verd[INFO]\norm JSON en el cuerpo"
+    retornar rapido_json_valor(rapido_cuerpo_json())
+fin_funcion
+
+enviar funcion api_saludo(texto sol) retorna texto
+    texto nombre = rapido_param("nombre")
+    texto j = "{\"saludo\":\"Hola "
+    j = concatenar(j, nombre)
+    j = concatenar(j, "\"}")
+    imprimir "\verd[INFO]\norm Ruta saludo"
+    retornar rapido_json(j)
+fin_funcion

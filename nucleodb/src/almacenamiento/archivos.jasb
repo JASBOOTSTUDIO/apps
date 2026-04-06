@@ -1,0 +1,155 @@
+
+# ============================================================
+# nucleodb/src/almacenamiento/archivos.jasb
+# Operaciones de bajo nivel sobre archivos .ndb
+# Formato de linea: id|nombre|contenido
+# ============================================================
+
+enviar funcion ndb_existe_coleccion(texto coleccion) retorna bool
+    texto ruta = "data/nodos/" + coleccion + ".ndb"
+    retornar existe_archivo(ruta)
+fin_funcion
+
+enviar funcion ndb_insertar(texto coleccion, texto id, texto nombre, texto contenido) retorna bool
+    texto ruta = "data/nodos/" + coleccion + ".ndb"
+    entero archivo = fs_abrir(ruta, "a")
+    si archivo == 0 entonces
+        retornar falso
+    fin_si
+    texto linea = id + "|" + nombre + "|" + contenido + "\n"
+    fs_escribir(linea, archivo)
+    fs_cerrar(archivo)
+    retornar verdadero
+fin_funcion
+
+enviar funcion ndb_leer_todos(texto coleccion) retorna lista
+    lista nodos = mem_lista_crear()
+    texto ruta = "data/nodos/" + coleccion + ".ndb"
+    si no existe_archivo(ruta) entonces
+        retornar nodos
+    fin_si
+    texto contenido = fs_leer_texto(ruta)
+    lista lineas = dividir_texto(contenido, "\n")
+    entero i = 0
+    mientras i < mem_lista_tamano(lineas) hacer
+        texto linea = mem_lista_obtener(lineas, i)
+        si longitud_texto(linea) > 0 entonces
+            mem_lista_agregar(nodos, linea)
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar nodos
+fin_funcion
+
+# Devuelve el campo en posicion idx (0=id, 1=nombre, 2=contenido)
+enviar funcion ndb_campo_linea(texto linea, entero idx) retorna texto
+    lista partes = dividir_texto(linea, "|")
+    si idx < mem_lista_tamano(partes) entonces
+        retornar mem_lista_obtener(partes, idx)
+    fin_si
+    retornar ""
+fin_funcion
+
+enviar funcion ndb_buscar_por_id(texto coleccion, texto id_nodo) retorna texto
+    lista todos = ndb_leer_todos(coleccion)
+    entero i = 0
+    mientras i < mem_lista_tamano(todos) hacer
+        texto linea = mem_lista_obtener(todos, i)
+        lista partes = dividir_texto(linea, "|")
+        texto id_linea = ""
+        si mem_lista_tamano(partes) > 0 entonces
+            id_linea = mem_lista_obtener(partes, 0)
+        fin_si
+        si id_linea == id_nodo entonces
+            retornar linea
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar ""
+fin_funcion
+
+enviar funcion ndb_contar(texto coleccion) retorna entero
+    lista todos = ndb_leer_todos(coleccion)
+    retornar mem_lista_tamano(todos)
+fin_funcion
+
+enviar funcion ndb_actualizar_contenido(texto coleccion, texto id_nodo, texto nuevo_contenido) retorna bool
+    lista todos = ndb_leer_todos(coleccion)
+    lista salida = mem_lista_crear()
+    entero i = 0
+    entero encontrado = 0
+    mientras i < mem_lista_tamano(todos) hacer
+        texto linea = mem_lista_obtener(todos, i)
+        lista partes = dividir_texto(linea, "|")
+        texto id_linea = ""
+        texto nombre = ""
+        si mem_lista_tamano(partes) > 0 entonces
+            id_linea = mem_lista_obtener(partes, 0)
+        fin_si
+        si mem_lista_tamano(partes) > 1 entonces
+            nombre = mem_lista_obtener(partes, 1)
+        fin_si
+        si id_linea == id_nodo entonces
+            mem_lista_agregar(salida, id_nodo + "|" + nombre + "|" + nuevo_contenido)
+            encontrado = 1
+        sino
+            mem_lista_agregar(salida, linea)
+        fin_si
+        i = i + 1
+    fin_mientras
+    si encontrado == 0 entonces
+        retornar falso
+    fin_si
+    texto ruta = "data/nodos/" + coleccion + ".ndb"
+    entero archivo = fs_abrir(ruta, "w")
+    si archivo == 0 entonces
+        retornar falso
+    fin_si
+    entero j = 0
+    mientras j < mem_lista_tamano(salida) hacer
+        texto linea_out = mem_lista_obtener(salida, j)
+        fs_escribir(linea_out, archivo)
+        fs_escribir("\n", archivo)
+        j = j + 1
+    fin_mientras
+    fs_cerrar(archivo)
+    retornar verdadero
+fin_funcion
+
+enviar funcion ndb_eliminar_por_id(texto coleccion, texto id_nodo) retorna bool
+    lista todos = ndb_leer_todos(coleccion)
+    lista salida = mem_lista_crear()
+    entero i = 0
+    entero eliminado = 0
+    mientras i < mem_lista_tamano(todos) hacer
+        texto linea = mem_lista_obtener(todos, i)
+        lista partes = dividir_texto(linea, "|")
+        texto id_linea = ""
+        si mem_lista_tamano(partes) > 0 entonces
+            id_linea = mem_lista_obtener(partes, 0)
+        fin_si
+        si id_linea == id_nodo entonces
+            eliminado = 1
+        sino
+            mem_lista_agregar(salida, linea)
+        fin_si
+        i = i + 1
+    fin_mientras
+    si eliminado == 0 entonces
+        retornar falso
+    fin_si
+    texto ruta = "data/nodos/" + coleccion + ".ndb"
+    entero archivo = fs_abrir(ruta, "w")
+    si archivo == 0 entonces
+        retornar falso
+    fin_si
+    entero j = 0
+    mientras j < mem_lista_tamano(salida) hacer
+        texto linea_out = mem_lista_obtener(salida, j)
+        fs_escribir(linea_out, archivo)
+        fs_escribir("\n", archivo)
+        j = j + 1
+    fin_mientras
+    fs_cerrar(archivo)
+    retornar verdadero
+fin_funcion

@@ -1,0 +1,9 @@
+lista<texto> G
+
+principal
+    G = crear_lista()
+    mem_lista_agregar(G, "Ana")
+    texto t = mem_lista_obtener(G, 0)
+    texto u = concatenar("x", t)
+    imprimir u
+fin_principal

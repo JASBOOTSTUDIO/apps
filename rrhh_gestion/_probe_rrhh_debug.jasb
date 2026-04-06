@@ -1,0 +1,19 @@
+usar todo de "mod/rrhh_const.jasb"
+usar todo de "mod/rrhh_estado.jasb"
+usar todo de "mod/rrhh_util.jasb"
+usar todo de "mod/rrhh_empleados.jasb"
+
+principal
+    rrhh_init()
+    rrhh_limpiar_emp()
+    g_next_emp_id = 1
+    g_buf_sal_cent = 100
+    rrhh_emp_alta("Ana", "D1", "Dep", "Car")
+    imprimir "tam_ids="
+    imprimir str_desde_numero(mem_lista_tamano(ge_ids))
+    imprimir " tam_noms="
+    imprimir str_desde_numero(mem_lista_tamano(ge_noms))
+    texto tx = mem_lista_obtener(ge_noms, 0)
+    imprimir " solo_nom="
+    imprimir tx
+fin_principal

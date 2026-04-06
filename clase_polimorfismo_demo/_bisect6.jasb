@@ -1,0 +1,23 @@
+usar todas de "motor_mazmorra.jasb"
+clase Entidad
+    entero id
+    funcion reaccionar
+fin_clase
+clase Tesoro extiende Entidad
+    entero monedas
+fin_clase
+clase Trampa extiende Tesoro
+    entero penal_hp
+fin_clase
+Trampa tr
+funcion noop(entero e) retorna entero
+    retornar e
+fin_funcion
+principal
+    funcion rf
+    funcion dyn
+    rf = noop
+    tr.reaccionar = rf
+    dyn = tr.reaccionar
+    imprimir dyn(2)
+fin_principal

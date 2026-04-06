@@ -1,0 +1,7 @@
+usar todo de "mod_probe/p_est.jasb"
+usar todo de "mod_probe/p_use.jasb"
+
+principal
+    p_init()
+    p_run()
+fin_principal

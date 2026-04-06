@@ -1,0 +1,15 @@
+# Rutas y separador de columnas del almacén TSV.
+# El launcher F5 ejecuta desde la carpeta de la app; otras corridas suelen salir desde la raiz del repo.
+enviar constante texto CRUD_ARCH = "crud_notas.tsv"
+enviar constante texto CRUD_ARCH_ROOT = "apps/crud_archivos_interactivo/crud_notas.tsv"
+enviar constante texto CRUD_SEP = "|"
+
+enviar funcion crud_arch_resolver() retorna texto
+    si existe_archivo(CRUD_ARCH) == 1 entonces
+        retornar CRUD_ARCH
+    fin_si
+    si existe_archivo(CRUD_ARCH_ROOT) == 1 entonces
+        retornar CRUD_ARCH_ROOT
+    fin_si
+    retornar CRUD_ARCH
+fin_funcion

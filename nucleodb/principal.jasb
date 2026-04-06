@@ -1,0 +1,31 @@
+# ============================================================
+# nucleodb/principal.jasb
+# Punto de entrada para el servidor Standalone de NúcleoDB
+# ============================================================
+
+usar todas de "../../stdlib/forja/forja.jasb"
+usar {protocolo_despachar} de "./src/protocolo/forja.jasb"
+
+principal
+    imprimir "==============================================="
+    imprimir " 🔥 Iniciando NucleoDB - Motor de Datos Jasboot"
+    imprimir "==============================================="
+
+    # Crear memoria neuronal si no existe
+    crear_memoria("data/cerebro.jmn")
+
+    # Preparar estructura minima de datos para que el motor pueda persistir.
+    sistema_ejecutar("if not exist data mkdir data")
+    sistema_ejecutar("if not exist data\\nodos mkdir data\\nodos")
+    sistema_ejecutar("if not exist data\\grafos mkdir data\\grafos")
+    sistema_ejecutar("if not exist data\\transacciones mkdir data\\transacciones")
+
+    imprimir "\verd[INFO]\norm NucleoDB API activa en http://127.0.0.1:18302"
+    imprimir "\azul[INFO]\norm Ctrl+C para detener."
+    
+    # Iniciar servidor
+    imprimir forja_http_bucle("127.0.0.1", 18302, 100, protocolo_despachar)
+    
+    cerrar_memoria()
+    imprimir "\n[INFO] Servidor detenido, memoria sincronizada."
+fin_principal

@@ -1,0 +1,207 @@
+# RRHH — empleados y nóminas (consola, persistencia TSV). Solo Jasboot.
+# Ejecutar desde esta carpeta:
+#   Set-Location ...\apps\rrhh_gestion
+#   & ..\..\sdk-dependiente\jas-compiler-c\bin\jbc.exe rrhh_app.jasb -e
+#
+# Datos: RRHH_empleados.tsv y RRHH_nominas.tsv (separador |). No use '|' en textos libres.
+# Importes en centavos de moneda local (100 = 1.00 unidades).
+#
+# Código modular bajo mod/ (const, estado, util, empleados, alta empleado, nominas, reportes, persist).
+
+usar todo de "mod/rrhh_const.jasb"
+usar todo de "mod/rrhh_estado.jasb"
+usar todo de "mod/rrhh_util.jasb"
+usar todo de "mod/rrhh_empleados.jasb"
+usar todo de "mod/rrhh_alta_empleado.jasb"
+usar todo de "mod/rrhh_nominas.jasb"
+usar todo de "mod/rrhh_reportes.jasb"
+usar todo de "mod/rrhh_persist.jasb"
+
+principal
+    rrhh_init()
+    entero ce = rrhh_cargar_emp()
+    entero cn = rrhh_cargar_nom()
+    si ce == 0 entonces
+        imprimir "Aviso: no se pudo leer empleados; tabla vacia."
+        rrhh_limpiar_emp()
+        g_next_emp_id = 1
+    fin_si
+    si cn == 0 entonces
+        imprimir "Aviso: no se pudo leer nominas; tabla vacia."
+        rrhh_limpiar_nom()
+        g_next_nom_id = 1
+    fin_si
+    rrhh_semilla()
+
+    texto op = ""
+    limpiar_consola
+    mientras op no es igual a "0" hacer
+        imprimir "========== RRHH — GESTION EMPRESARIAL =========="
+        imprimir "Empleados:" + RRHH_ARCH_EMP + "  |  Nominas:" + RRHH_ARCH_NOM
+        imprimir ""
+        imprimir " 1  Listar empleados activos"
+        imprimir " 2  Listar todos los empleados (incl. baja logica)"
+        imprimir " 3  Alta de empleado"
+        imprimir " 4  Baja logica de empleado"
+        imprimir " 5  Buscar por texto (nombre o documento)"
+        imprimir " 6  Cambiar salario base (centavos, por ID)"
+        imprimir " 7  Registrar linea de nomina (bruto/deducciones)"
+        imprimir " 8  Listar nominas de un empleado (ID)"
+        imprimir " 9  Listar nominas por periodo (ej. 2025-03)"
+        imprimir "10  Marcar nomina como liquidada (ID nomina)"
+        imprimir "11  Resumen (headcount, masa salarial, # nominas)"
+        imprimir "12  Guardar todo a disco"
+        imprimir "13  Recargar desde disco (confirmar)"
+        imprimir " 0  Salir (guarda automaticamente)"
+        imprimir_sin_salto "Opcion: "
+        ingresar_texto op
+        op = rrhh_limpia_linea(op)
+        op = rrhh_trim_opcion(op)
+
+        seleccionar op hacer
+            caso "1"
+                rrhh_listar_emp(1)
+            caso "2"
+                rrhh_listar_emp(0)
+            caso "3"
+                imprimir_sin_salto "Nombre completo: "
+                ingresar_texto n3
+                imprimir_sin_salto "Documento (DNI/NIE/etc.): "
+                ingresar_texto d3
+                imprimir_sin_salto "Departamento: "
+                ingresar_texto p3
+                imprimir_sin_salto "Cargo: "
+                ingresar_texto c3
+                imprimir_sin_salto "Salario mensual base (centavos, ej. 250000 = 2500.00): "
+                ingresar_texto s3
+                g_buf_sal_cent = str_a_entero(s3)
+                entero r3 = rrhh_emp_alta(n3, d3, p3, c3)
+                si r3 == -1 entonces
+                    imprimir "Error: limite de empleados alcanzado."
+                sino si r3 == -2 entonces
+                    imprimir "Error: el nombre no puede estar vacio."
+                sino si r3 == -3 entonces
+                    imprimir "Error: salario invalido."
+                sino
+                    imprimir "Empleado creado. ID asignado (ver listado)."
+                    rrhh_guardar_todo()
+                fin_si
+            caso "4"
+                imprimir_sin_salto "ID empleado a dar de baja: "
+                ingresar_texto s4
+                entero id4 = str_a_entero(s4)
+                si rrhh_baja_emp(id4) == 1 entonces
+                    imprimir "Baja logica aplicada."
+                    rrhh_guardar_todo()
+                sino
+                    imprimir "ID no encontrado."
+                fin_si
+            caso "5"
+                imprimir_sin_salto "Texto a buscar: "
+                ingresar_texto q5
+                entero h5 = rrhh_buscar_imp(q5)
+                si h5 == 0 entonces
+                    imprimir "(sin coincidencias entre activos)"
+                fin_si
+            caso "6"
+                imprimir_sin_salto "ID empleado: "
+                ingresar_texto s6
+                entero id6 = str_a_entero(s6)
+                imprimir_sin_salto "Nuevo salario base (centavos): "
+                ingresar_texto t6
+                entero v6 = str_a_entero(t6)
+                si rrhh_set_salario(id6, v6) == 1 entonces
+                    imprimir "Salario actualizado."
+                    rrhh_guardar_todo()
+                sino
+                    imprimir "Error: ID invalido o salario negativo."
+                fin_si
+            caso "7"
+                imprimir_sin_salto "ID empleado: "
+                ingresar_texto s7
+                entero e7 = str_a_entero(s7)
+                imprimir_sin_salto "Periodo (AAAA-MM): "
+                ingresar_texto p7
+                imprimir_sin_salto "Bruto en centavos: "
+                ingresar_texto b7
+                imprimir_sin_salto "Deducciones en centavos: "
+                ingresar_texto d7
+                si longitud(p7) > 0 y contiene_texto(p7, "-") == 0 entonces
+                    imprimir "Aviso: conviene periodo tipo AAAA-MM (con guion)."
+                fin_si
+                g_buf_bruto_cent = str_a_entero(b7)
+                g_buf_ded_cent = str_a_entero(d7)
+                entero r7 = rrhh_nom_agregar(e7, p7)
+                si r7 == -1 entonces
+                    imprimir "Error: limite de nominas."
+                sino si r7 == -2 entonces
+                    imprimir "Error: empleado inexistente o inactivo."
+                sino si r7 == -3 entonces
+                    imprimir "Error: periodo vacio."
+                sino si r7 == -4 entonces
+                    imprimir "Error: importes negativos no permitidos."
+                sino si r7 == -5 entonces
+                    imprimir "Error: deducciones mayores que bruto."
+                sino
+                    imprimir "Nomina registrada (borrador, liquide con opcion 10)."
+                    rrhh_guardar_todo()
+                fin_si
+            caso "8"
+                imprimir_sin_salto "ID empleado: "
+                ingresar_texto s8
+                entero e8 = str_a_entero(s8)
+                rrhh_listar_nom_empleado(e8)
+            caso "9"
+                imprimir_sin_salto "Periodo exacto (AAAA-MM): "
+                ingresar_texto p9
+                rrhh_listar_nom_periodo(p9)
+            caso "10"
+                imprimir_sin_salto "ID de nomina: "
+                ingresar_texto s10
+                entero n10 = str_a_entero(s10)
+                si rrhh_nom_liquidar(n10) == 1 entonces
+                    imprimir "Nomina marcada como liquidada."
+                    rrhh_guardar_todo()
+                sino
+                    imprimir "ID de nomina no encontrado."
+                fin_si
+            caso "11"
+                rrhh_resumen()
+            caso "12"
+                si rrhh_guardar_todo() == 1 entonces
+                    imprimir "Guardado correcto (empleados + nominas)."
+                sino
+                    imprimir "Error al guardar."
+                fin_si
+            caso "13"
+                imprimir "Escriba SI para recargar desde disco (pierde cambios no guardados): "
+                ingresar_texto cf
+                si cf == "SI" entonces
+                    rrhh_cargar_emp()
+                    rrhh_cargar_nom()
+                    imprimir "Recarga completada."
+                sino
+                    imprimir "Cancelado."
+                fin_si
+            caso "0"
+                si rrhh_guardar_todo() == 1 entonces
+                    imprimir "Guardado. Hasta luego."
+                sino
+                    imprimir "Advertencia: error al guardar al salir."
+                fin_si
+            defecto
+                imprimir "Opcion no reconocida."
+        fin_seleccionar
+
+        si op no es igual a "0" entonces
+            imprimir ""
+            imprimir "--- Pulse Enter para continuar ---"
+            ingresar_texto espera_menu
+            entero nlen_pause = longitud(espera_menu)
+            si nlen_pause > 999999999 entonces
+                imprimir ""
+            fin_si
+            limpiar_consola
+        fin_si
+    fin_mientras
+fin_principal

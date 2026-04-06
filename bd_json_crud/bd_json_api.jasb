@@ -1,0 +1,371 @@
+# Servidor HTTP JSON para bd_demo.json (misma logica que consola).
+# CWD = esta carpeta. Ej.: jasboot-ir-vm.exe bd_json_api.jbo 8787
+# usar todas: core + api_basica (stdlib relativo a apps/bd_json_crud)
+
+usar todas de "bd_json_core.jasb"
+usar todas de "..\\..\\stdlib\\api\\api_basica.jasb"
+
+funcion bd_api_path_limpio(texto ruta) retorna texto
+    si contiene_texto(ruta, "?") == 1 entonces
+        retornar extraer_antes_de(ruta, "?")
+    fin_si
+    retornar ruta
+fin_funcion
+
+funcion bd_api_query_id(texto ruta) retorna entero
+    si contiene_texto(ruta, "id=") == 0 entonces
+        retornar -1
+    fin_si
+    texto resto = extraer_despues_de(ruta, "id=")
+    texto num = extraer_antes_de(resto, "&")
+    si longitud_texto(num) == 0 entonces
+        retornar str_a_entero(resto)
+    fin_si
+    retornar str_a_entero(num)
+fin_funcion
+
+funcion bd_api_resp_cors_json(texto estado_http, texto cuerpo_json) retorna texto
+    texto largo = str_desde_numero(longitud_texto(cuerpo_json))
+    texto r = "HTTP/1.1 "
+    r = concatenar(r, estado_http)
+    r = concatenar(r, "\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: application/json; charset=utf-8\r\nConnection: close\r\nContent-Length: ")
+    r = concatenar(r, largo)
+    r = concatenar(r, "\r\n\r\n")
+    retornar concatenar(r, cuerpo_json)
+fin_funcion
+
+funcion bd_api_resp_ok_json(texto cuerpo_json) retorna texto
+    retornar bd_api_resp_cors_json("200 OK", cuerpo_json)
+fin_funcion
+
+funcion bd_api_resp_html(texto estado_http, texto html) retorna texto
+    texto largo = str_desde_numero(longitud_texto(html))
+    texto r = "HTTP/1.1 "
+    r = concatenar(r, estado_http)
+    r = concatenar(r, "\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\nContent-Length: ")
+    r = concatenar(r, largo)
+    r = concatenar(r, "\r\n\r\n")
+    retornar concatenar(r, html)
+fin_funcion
+
+funcion bd_api_resp_sin_cuerpo(texto linea_estado) retorna texto
+    texto r = "HTTP/1.1 "
+    r = concatenar(r, linea_estado)
+    r = concatenar(r, "\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Length: 0\r\n\r\n")
+    retornar r
+fin_funcion
+
+funcion bd_api_pagina_inicio() retorna texto
+    texto h = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>BD JSON API</title></head><body>"
+    h = concatenar(h, "<h1>BD JSON API</h1>")
+    h = concatenar(h, "<p>Endpoints JSON:</p><ul>")
+    h = concatenar(h, "<li><a href=\"/api/health\">GET /api/health</a></li>")
+    h = concatenar(h, "<li><a href=\"/api\">GET /api</a> (indice de rutas)</li>")
+    h = concatenar(h, "<li><a href=\"/api/rows\">GET /api/rows</a></li>")
+    h = concatenar(h, "</ul><p>Si ves la pagina en blanco, abre uno de los enlaces de arriba.</p></body></html>")
+    retornar bd_api_resp_html("200 OK", h)
+fin_funcion
+
+funcion bd_api_resp_404() retorna texto
+    retornar bd_api_resp_cors_json("404 Not Found", "{\"error\":\"no_encontrado\"}")
+fin_funcion
+
+funcion bd_api_resp_400(texto msg) retorna texto
+    texto e = "{\"error\":\""
+    e = concatenar(e, bd_esc_json(msg))
+    e = concatenar(e, "\"}")
+    retornar bd_api_resp_cors_json("400 Bad Request", e)
+fin_funcion
+
+funcion bd_api_resp_options() retorna texto
+    retornar "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nConnection: close\r\n\r\n"
+fin_funcion
+
+funcion bd_api_colecciones_array_json(texto raw) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero n = json_lista_tamano(colls)
+    texto acc = "["
+    entero need = 0
+    entero i = 0
+    mientras i < n hacer
+        si need == 1 entonces
+            acc = concatenar(acc, ",")
+        fin_si
+        need = 1
+        texto nm = json_a_texto(json_objeto_obtener(json_lista_obtener(colls, i), "name"))
+        acc = concatenar(acc, "\"")
+        acc = concatenar(acc, bd_esc_json(nm))
+        acc = concatenar(acc, "\"")
+        i = i + 1
+    fin_mientras
+    acc = concatenar(acc, "]")
+    retornar acc
+fin_funcion
+
+funcion bd_api_fila_json_desde_cuerpo(entero body, entero cols, entero id_val) retorna texto
+    texto row = "{\"id\":"
+    row = concatenar(row, str_desde_numero(id_val))
+    entero nc = json_lista_tamano(cols)
+    entero ci = 0
+    mientras ci < nc hacer
+        entero cdef = json_lista_obtener(cols, ci)
+        texto cname = json_a_texto(json_objeto_obtener(cdef, "name"))
+        entero vh = json_objeto_obtener(body, cname)
+        texto frag = json_stringify(vh)
+        row = concatenar(row, ",\"")
+        row = concatenar(row, bd_esc_json(cname))
+        row = concatenar(row, "\":")
+        row = concatenar(row, frag)
+        ci = ci + 1
+    fin_mientras
+    row = concatenar(row, "}")
+    retornar row
+fin_funcion
+
+funcion bd_api_buscar_fila_json(texto raw, entero buscar_id) retorna texto
+    entero doc = json_parse(raw)
+    entero colls = json_objeto_obtener(doc, "collections")
+    entero ix = bd_idx_coleccion_actual(doc)
+    entero coll = json_lista_obtener(colls, ix)
+    entero items_h = json_objeto_obtener(coll, "items")
+    entero t = json_lista_tamano(items_h)
+    entero i = 0
+    mientras i < t hacer
+        entero elem = json_lista_obtener(items_h, i)
+        entero eid = json_a_entero(json_objeto_obtener(elem, "id"))
+        si eid == buscar_id entonces
+            retornar json_stringify(elem, 2)
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar ""
+fin_funcion
+
+funcion bd_http_manejar(texto solicitud) retorna texto
+    texto met = api_metodo(solicitud)
+    texto ruta_full = api_ruta(solicitud)
+    texto path = bd_api_path_limpio(ruta_full)
+    texto cuerpo = api_cuerpo(solicitud)
+    texto dbpath = "bd_demo.json"
+
+    si met == "OPTIONS" entonces
+        retornar bd_api_resp_options()
+    fin_si
+
+    si met == "GET" y path == "/" entonces
+        retornar bd_api_pagina_inicio()
+    fin_si
+    si met == "GET" y path == "/index.html" entonces
+        retornar bd_api_pagina_inicio()
+    fin_si
+    si met == "GET" y path == "/favicon.ico" entonces
+        retornar bd_api_resp_sin_cuerpo("204 No Content")
+    fin_si
+
+    texto raw = bd_cargar(dbpath)
+
+    si met == "GET" y path == "/api/health" entonces
+        retornar bd_api_resp_ok_json("{\"ok\":true,\"service\":\"bd_json\"}")
+    fin_si
+
+    si met == "GET" y path == "/api" entonces
+        retornar bd_api_resp_ok_json("{\"name\":\"bd_json_api\",\"document\":\"GET/PUT /api/document\",\"collections\":\"GET/POST /api/collections\",\"current\":\"GET/PUT /api/current\",\"schema\":\"GET /api/schema\",\"rows\":\"GET/POST /api/rows\",\"row\":\"GET/PUT/DELETE /api/row?id=\",\"columns\":\"POST /api/columns\"}")
+    fin_si
+
+    si met == "GET" y path == "/api/document" entonces
+        retornar bd_api_resp_ok_json(json_stringify(json_parse(raw), 2))
+    fin_si
+
+    si met == "PUT" y path == "/api/document" entonces
+        entero docn = json_parse(cuerpo)
+        texto guard = json_stringify(docn, 2)
+        bd_guardar(dbpath, guard)
+        retornar bd_api_resp_ok_json("{\"saved\":true}")
+    fin_si
+
+    si met == "GET" y path == "/api/collections" entonces
+        retornar bd_api_resp_ok_json(bd_api_colecciones_array_json(raw))
+    fin_si
+
+    si met == "POST" y path == "/api/collections" entonces
+        entero b = json_parse(cuerpo)
+        texto ncoll = json_a_texto(json_objeto_obtener(b, "name"))
+        si longitud_texto(ncoll) == 0 entonces
+            retornar bd_api_resp_400("falta name")
+        fin_si
+        texto nueva = "{\"name\":\""
+        nueva = concatenar(nueva, bd_esc_json(ncoll))
+        nueva = concatenar(nueva, "\",\"nextId\":1,\"columns\":[],\"items\":[]}")
+        entero doc = json_parse(raw)
+        entero colls = json_objeto_obtener(doc, "collections")
+        texto arr = bd_collections_agregar_final(colls, nueva)
+        texto raw2 = bd_doc_construir_v2(ncoll, arr)
+        bd_guardar(dbpath, raw2)
+        texto r_ok = "{\"created\":true,\"current\":\""
+        r_ok = concatenar(r_ok, bd_esc_json(ncoll))
+        r_ok = concatenar(r_ok, "\"}")
+        retornar bd_api_resp_ok_json(r_ok)
+    fin_si
+
+    si met == "GET" y path == "/api/current" entonces
+        entero doc = json_parse(raw)
+        texto cur = json_a_texto(json_objeto_obtener(doc, "current"))
+        texto j = "{\"name\":\""
+        j = concatenar(j, bd_esc_json(cur))
+        j = concatenar(j, "\"}")
+        retornar bd_api_resp_ok_json(j)
+    fin_si
+
+    si met == "PUT" y path == "/api/current" entonces
+        entero b = json_parse(cuerpo)
+        texto nact = json_a_texto(json_objeto_obtener(b, "name"))
+        si longitud_texto(nact) == 0 entonces
+            retornar bd_api_resp_400("falta name")
+        fin_si
+        texto raw2 = bd_raiz_fijar_actual(raw, nact)
+        bd_guardar(dbpath, raw2)
+        texto r_cur = "{\"current\":\""
+        r_cur = concatenar(r_cur, bd_esc_json(nact))
+        r_cur = concatenar(r_cur, "\"}")
+        retornar bd_api_resp_ok_json(r_cur)
+    fin_si
+
+    si met == "GET" y path == "/api/schema" entonces
+        entero doc = json_parse(raw)
+        entero colls = json_objeto_obtener(doc, "collections")
+        entero ix = bd_idx_coleccion_actual(doc)
+        entero coll = json_lista_obtener(colls, ix)
+        entero cols = json_objeto_obtener(coll, "columns")
+        retornar bd_api_resp_ok_json(json_stringify(cols, 2))
+    fin_si
+
+    si met == "POST" y path == "/api/columns" entonces
+        entero b = json_parse(cuerpo)
+        texto cn = json_a_texto(json_objeto_obtener(b, "name"))
+        texto ck = json_a_texto(json_objeto_obtener(b, "kind"))
+        si longitud_texto(cn) == 0 entonces
+            retornar bd_api_resp_400("falta name")
+        fin_si
+        si ck == "" entonces
+            ck = "texto"
+        fin_si
+        texto raw2 = bd_doc_agregar_columna_y_backfill(raw, cn, ck)
+        bd_guardar(dbpath, raw2)
+        retornar bd_api_resp_ok_json("{\"added\":true}")
+    fin_si
+
+    si met == "GET" y path == "/api/rows" entonces
+        entero doc = json_parse(raw)
+        entero colls = json_objeto_obtener(doc, "collections")
+        entero ix = bd_idx_coleccion_actual(doc)
+        entero coll = json_lista_obtener(colls, ix)
+        entero items_h = json_objeto_obtener(coll, "items")
+        retornar bd_api_resp_ok_json(json_stringify(items_h, 2))
+    fin_si
+
+    si met == "GET" y path == "/api/row" entonces
+        entero qid = bd_api_query_id(ruta_full)
+        si qid < 0 entonces
+            retornar bd_api_resp_400("falta id en query")
+        fin_si
+        texto uno = bd_api_buscar_fila_json(raw, qid)
+        si longitud_texto(uno) == 0 entonces
+            retornar bd_api_resp_404()
+        fin_si
+        retornar bd_api_resp_ok_json(uno)
+    fin_si
+
+    si met == "POST" y path == "/api/rows" entonces
+        entero body = json_parse(cuerpo)
+        entero doc = json_parse(raw)
+        entero colls = json_objeto_obtener(doc, "collections")
+        entero ix = bd_idx_coleccion_actual(doc)
+        entero coll = json_lista_obtener(colls, ix)
+        entero cols = json_objeto_obtener(coll, "columns")
+        entero next_id = json_a_entero(json_objeto_obtener(coll, "nextId"))
+        entero nc = json_lista_tamano(cols)
+        si nc == 0 entonces
+            retornar bd_api_resp_400("sin columnas en el esquema")
+        fin_si
+        texto fila_str = bd_api_fila_json_desde_cuerpo(body, cols, next_id)
+        texto raw2 = bd_agregar_fila_doc(raw, fila_str)
+        bd_guardar(dbpath, raw2)
+        texto r_ins = "{\"inserted\":true,\"id\":"
+        r_ins = concatenar(r_ins, str_desde_numero(next_id))
+        r_ins = concatenar(r_ins, "}")
+        retornar bd_api_resp_ok_json(r_ins)
+    fin_si
+
+    si met == "PUT" y path == "/api/row" entonces
+        entero qid = bd_api_query_id(ruta_full)
+        si qid < 0 entonces
+            retornar bd_api_resp_400("falta id en query")
+        fin_si
+        si bd_existe_id(raw, qid) == 0 entonces
+            retornar bd_api_resp_404()
+        fin_si
+        entero body = json_parse(cuerpo)
+        entero doc = json_parse(raw)
+        entero colls = json_objeto_obtener(doc, "collections")
+        entero ix = bd_idx_coleccion_actual(doc)
+        entero coll = json_lista_obtener(colls, ix)
+        entero cols = json_objeto_obtener(coll, "columns")
+        texto fila_str = bd_api_fila_json_desde_cuerpo(body, cols, qid)
+        texto raw2 = bd_actualizar_fila(raw, qid, fila_str)
+        bd_guardar(dbpath, raw2)
+        texto r_up = "{\"updated\":true,\"id\":"
+        r_up = concatenar(r_up, str_desde_numero(qid))
+        r_up = concatenar(r_up, "}")
+        retornar bd_api_resp_ok_json(r_up)
+    fin_si
+
+    si met == "DELETE" y path == "/api/row" entonces
+        entero qid = bd_api_query_id(ruta_full)
+        si qid < 0 entonces
+            retornar bd_api_resp_400("falta id en query")
+        fin_si
+        si bd_existe_id(raw, qid) == 0 entonces
+            retornar bd_api_resp_404()
+        fin_si
+        texto raw2 = bd_borrar_fila(raw, qid)
+        bd_guardar(dbpath, raw2)
+        texto r_del = "{\"deleted\":true,\"id\":"
+        r_del = concatenar(r_del, str_desde_numero(qid))
+        r_del = concatenar(r_del, "}")
+        retornar bd_api_resp_ok_json(r_del)
+    fin_si
+
+    retornar bd_api_resp_404()
+fin_funcion
+
+principal
+    entero puerto = 8787
+    si sys_argc() >= 3 entonces
+        puerto = str_a_entero(sys_argv(2))
+    fin_si
+    texto host = "127.0.0.1"
+    imprimir "BD JSON API escuchando solo en esta maquina (IPv4):"
+    imprimir_sin_salto "  http://127.0.0.1:"
+    imprimir str_desde_numero(puerto)
+    imprimir "  (raiz / = ayuda HTML; JSON en /api/... )"
+    imprimir "Use http://127.0.0.1 (no solo localhost) si el navegador no responde."
+    socket srv = tcp_escuchar(host, puerto)
+    si srv == 0 entonces
+        api_alerta_puerto_en_uso(host, puerto, "HTTP")
+    sino
+        entero nreq = 0
+        mientras nreq < 999999999 hacer
+            socket cli = tcp_aceptar(srv)
+            si cli == 0 entonces
+            sino
+                texto sol = api_leer_solicitud_http(cli)
+                texto resp = bd_http_manejar(sol)
+                api_tcp_enviar_texto_completo(cli, resp)
+                tcp_cerrar(cli)
+                nreq = nreq + 1
+            fin_si
+        fin_mientras
+        tcp_cerrar(srv)
+    fin_si
+fin_principal
