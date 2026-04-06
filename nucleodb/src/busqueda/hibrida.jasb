@@ -1,0 +1,33 @@
+# ============================================================
+# nucleodb/src/busqueda/hibrida.jasb
+# Búsqueda híbrida: filtro exacto + similitud semántica
+# ============================================================
+
+usar {buscar_semantico} de "./semantica.jasb"
+
+enviar funcion buscar_hibrido(texto coleccion, texto consulta, texto campo_filtro, entero valor_minimo) retorna lista
+    # Paso 1: busqueda semantica amplia
+    lista candidatos_sem = buscar_semantico(coleccion, consulta, 50)
+
+    # Paso 2: filtrar por campo usando la JMN (asume que los campos se guardan como ID_CAMPO)
+    lista resultados = mem_lista_crear()
+    entero i = 0
+    
+    mientras i < mem_lista_tamano(candidatos_sem) hacer
+        texto id_cand = mem_lista_obtener(candidatos_sem, i)
+        texto clave_campo = id_cand + "_" + campo_filtro
+        
+        buscar clave_campo
+        
+        # resultado es una variable implicita tras 'buscar'
+        entero valor_campo = str_a_entero(resultado)
+        
+        si valor_campo >= valor_minimo entonces
+            mem_lista_agregar(resultados, id_cand)
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+
+    retornar resultados
+fin_funcion

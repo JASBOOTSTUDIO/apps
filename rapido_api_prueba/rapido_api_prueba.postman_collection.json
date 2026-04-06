@@ -1,0 +1,134 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-rapido-api-prueba",
+    "name": "rapido_api_prueba",
+    "description": "Colección para la API de prueba del framework rapido (Jasboot).\n\nArranca el servidor desde la carpeta de la app (CWD con .env): `jasboot-ir-vm rapido_api_prueba.jbo`.\nPuerto: variable `PORT` en `.env` o argumento al VM.\nSupabase: configura `.env` según `.env.example`.\nAjusta `baseUrl` en la colección si cambias puerto.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Raíz",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/",
+        "description": "Lista el servicio y los endpoints disponibles."
+      }
+    },
+    {
+      "name": "Salud",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/salud",
+        "description": "Comprueba que la API responde (`ok`, `framework`)."
+      }
+    },
+    {
+      "name": "Supabase — estado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/supabase/estado",
+        "description": "Indica si hubo SUPABASE_DATABASE_URL + llave API en .env al arrancar."
+      }
+    },
+    {
+      "name": "Supabase — muestra tabla",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/supabase/muestra",
+        "description": "GET PostgREST a SUPABASE_TABLA_PRUEBA (o SUPABASE_TABLA) con SUPABASE_CONSULTA o ?select=*&limit=10."
+      }
+    },
+    {
+      "name": "Item por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/items/42",
+        "description": "Ruta con parámetro `:id` — cambia `42` en la URL."
+      }
+    },
+    {
+      "name": "Saludo por nombre",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/saludo/Maria",
+        "description": "Ruta con parámetro `:nombre` — cambia `Maria` en la URL."
+      }
+    },
+    {
+      "name": "Echo JSON",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"a\": 1,\n  \"b\": \"hola\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/echo",
+        "description": "Devuelve el mismo JSON del cuerpo. Requiere cuerpo JSON válido."
+      }
+    },
+    {
+      "name": "Echo JSON (sin cuerpo — error 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/echo",
+        "description": "Prueba el manejo cuando no hay JSON en el cuerpo."
+      }
+    },
+    {
+      "name": "OPTIONS (preflight CORS)",
+      "request": {
+        "method": "OPTIONS",
+        "header": [
+          {
+            "key": "Access-Control-Request-Method",
+            "value": "POST"
+          },
+          {
+            "key": "Access-Control-Request-Headers",
+            "value": "content-type"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echo",
+        "description": "El middleware CORS de rapido responde 204 a OPTIONS."
+      }
+    }
+  ]
+}

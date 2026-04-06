@@ -1,0 +1,313 @@
+# ============================================================
+# nucleodb/src/protocolo/forja.jasb
+# Router HTTP para exponer la API de NúcleoDB
+# ============================================================
+
+usar todas de "../../../../stdlib/forja/forja.jasb"
+usar todas de "../../../../stdlib/Estructa/codigo-jasb/ui.jasb"
+usar {forja_react_respuesta_assets, forja_css, forja_js} de "../../../../stdlib/forja/react.jasb"
+usar {
+    nucleodb_guardar,
+    nucleodb_obtener,
+    nucleodb_actualizar,
+    nucleodb_eliminar,
+    nucleodb_buscar_similar,
+    nucleodb_buscar_donde,
+    nucleodb_conectar,
+    nucleodb_relacionados,
+    nucleodb_total
+} de "../nucleo/api.jasb"
+
+enviar funcion protocolo_despachar(texto solicitud) retorna texto
+    si forja_es_get(solicitud, "/assets/app.css") entonces
+        retornar forja_css(fs_leer_texto("assets/app.css"))
+    fin_si
+
+    si forja_es_get(solicitud, "/assets/app.js") entonces
+        retornar forja_js(fs_leer_texto("assets/app.js"))
+    fin_si
+
+    si estructura_es_get(solicitud, "/") entonces
+        retornar forja_react_respuesta_assets("NucleoDB", "Dashboard responsive de NucleoDB servido por Forja + React sobre Jasboot.", "/assets/app.css", "/assets/app.js")
+    fin_si
+
+    si estructura_es_get(solicitud, "/explorar") entonces
+        retornar forja_react_respuesta_assets("NucleoDB", "Explorador responsive de NucleoDB servido por Forja + React sobre Jasboot.", "/assets/app.css", "/assets/app.js")
+    fin_si
+
+    si estructura_es_get(solicitud, "/api-demo") entonces
+        retornar forja_react_respuesta_assets("NucleoDB", "Superficie API de NucleoDB sobre Forja + React.", "/assets/app.css", "/assets/app.js")
+    fin_si
+
+    si forja_es_get(solicitud, "/api/ui/config") entonces
+        texto logo = fs_leer_texto("imagenes/nucleoDB_icono.base64.txt")
+        retornar forja_json("{\"logo\":\"" + logo + "\",\"usuario\":\"admin\",\"rol\":\"Administrador de NucleoDB\"}")
+    fin_si
+
+    si forja_es_get(solicitud, "/api/ui/dashboard") entonces
+        retornar forja_json("{\"total_nodos\":\"" + str_desde_numero(nucleodb_total("usuarios")) + "\",\"relaciones\":\"2,177\",\"actividad\":\"24h\",\"nodos\":[{\"nombre\":\"Juan Perez\",\"descripcion\":\"Intereses: inteligencia artificial, programacion.\",\"tags\":[\"usuario\",\"IA\",\"activo\"]},{\"nombre\":\"Elena Martinez\",\"descripcion\":\"Cluster semantico conectado a embeddings de negocio.\",\"tags\":[\"embeddings\",\"ventas\"]}]}")
+    fin_si
+
+    si forja_es_get(solicitud, "/api/ui/explorar") entonces
+        retornar forja_json("{\"resultados\":[{\"nombre\":\"Consulta IA\",\"descripcion\":\"Vista de resultados lista para conectarse al motor real de busqueda.\",\"tags\":[\"consulta\",\"semantica\"]},{\"nombre\":\"Dataset usuarios\",\"descripcion\":\"Coleccion primaria para pruebas visuales y funcionales.\",\"tags\":[\"usuarios\",\"demo\"]}]}")
+    fin_si
+
+    si forja_es_get(solicitud, "/api/ui/api") entonces
+        retornar forja_json("{\"rutas\":[\"GET /\",\"GET /explorar\",\"GET /api-demo\",\"GET /assets/app.css\",\"GET /assets/app.js\",\"GET /api/ui/config\",\"GET /api/ui/dashboard\",\"GET /api/ui/explorar\",\"GET /api/ui/api\",\"POST /nodos\",\"GET /nodos/obtener\",\"GET /nodos/crear\",\"POST /nodos/actualizar\",\"GET /nodos/actualizar-get\",\"POST /nodos/eliminar\",\"GET /nodos/eliminar-get\",\"GET /buscar\",\"POST /grafos/conectar\",\"GET /grafos/relacionados\",\"GET /sistema/status\"]}")
+    fin_si
+
+    si forja_es_post(solicitud, "/nodos") entonces
+        texto cuerpo_post = solicitud
+        texto coleccion = ""
+        texto id = ""
+        texto nombre = ""
+        texto contenido = ""
+        si contiene_texto(cuerpo_post, "\"coleccion\":\"") entonces
+            coleccion = extraer_despues_de(cuerpo_post, "\"coleccion\":\"")
+            coleccion = extraer_antes_de(coleccion, "\"")
+        fin_si
+        si contiene_texto(cuerpo_post, "\"id\":\"") entonces
+            id = extraer_despues_de(cuerpo_post, "\"id\":\"")
+            id = extraer_antes_de(id, "\"")
+        fin_si
+        si contiene_texto(cuerpo_post, "\"nombre\":\"") entonces
+            nombre = extraer_despues_de(cuerpo_post, "\"nombre\":\"")
+            nombre = extraer_antes_de(nombre, "\"")
+        fin_si
+        si contiene_texto(cuerpo_post, "\"contenido\":\"") entonces
+            contenido = extraer_despues_de(cuerpo_post, "\"contenido\":\"")
+            contenido = extraer_antes_de(contenido, "\"")
+        fin_si
+        si nucleodb_guardar(coleccion, id, nombre, contenido) entonces
+            retornar forja_json("{\"ok\":true,\"id\":\"" + id + "\"}")
+        fin_si
+        retornar forja_json("{\"ok\":false,\"error\":\"No se pudo guardar\"}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/nodos/obtener") entonces
+        texto ruta_ob = forja_ruta(solicitud)
+        texto coleccion_ob = ""
+        texto id_ob = ""
+        si contiene_texto(ruta_ob, "coleccion=") entonces
+            coleccion_ob = extraer_despues_de(ruta_ob, "coleccion=")
+            coleccion_ob = extraer_antes_de(coleccion_ob, "&")
+        fin_si
+        si contiene_texto(ruta_ob, "id=") entonces
+            id_ob = extraer_despues_de(ruta_ob, "id=")
+            id_ob = extraer_antes_de(id_ob, "&")
+        fin_si
+        texto nodo = nucleodb_obtener(coleccion_ob, id_ob)
+        si longitud_texto(nodo) == 0 entonces
+            retornar forja_json("{\"ok\":false,\"error\":\"No encontrado\"}")
+        fin_si
+        retornar forja_json("{\"ok\":true,\"nodo\":\"" + nodo + "\"}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/nodos/crear") entonces
+        texto ruta_crear = forja_ruta(solicitud)
+        texto coleccion_get = ""
+        texto id_get = ""
+        texto nombre_get = ""
+        texto contenido_get = ""
+        si contiene_texto(ruta_crear, "coleccion=") entonces
+            coleccion_get = extraer_despues_de(ruta_crear, "coleccion=")
+            coleccion_get = extraer_antes_de(coleccion_get, "&")
+        fin_si
+        si contiene_texto(ruta_crear, "id=") entonces
+            id_get = extraer_despues_de(ruta_crear, "id=")
+            id_get = extraer_antes_de(id_get, "&")
+        fin_si
+        si contiene_texto(ruta_crear, "nombre=") entonces
+            nombre_get = extraer_despues_de(ruta_crear, "nombre=")
+            nombre_get = extraer_antes_de(nombre_get, "&")
+        fin_si
+        si contiene_texto(ruta_crear, "contenido=") entonces
+            contenido_get = extraer_despues_de(ruta_crear, "contenido=")
+            contenido_get = extraer_antes_de(contenido_get, "&")
+        fin_si
+        si nucleodb_guardar(coleccion_get, id_get, nombre_get, contenido_get) entonces
+            retornar forja_json("{\"ok\":true,\"id\":\"" + id_get + "\"}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si forja_es_post(solicitud, "/nodos/actualizar") entonces
+        texto cuerpo_up = solicitud
+        texto coleccion_up = ""
+        texto id_up = ""
+        texto contenido_up = ""
+        si contiene_texto(cuerpo_up, "\"coleccion\":\"") entonces
+            coleccion_up = extraer_despues_de(cuerpo_up, "\"coleccion\":\"")
+            coleccion_up = extraer_antes_de(coleccion_up, "\"")
+        fin_si
+        si contiene_texto(cuerpo_up, "\"id\":\"") entonces
+            id_up = extraer_despues_de(cuerpo_up, "\"id\":\"")
+            id_up = extraer_antes_de(id_up, "\"")
+        fin_si
+        si contiene_texto(cuerpo_up, "\"contenido\":\"") entonces
+            contenido_up = extraer_despues_de(cuerpo_up, "\"contenido\":\"")
+            contenido_up = extraer_antes_de(contenido_up, "\"")
+        fin_si
+        si nucleodb_actualizar(coleccion_up, id_up, contenido_up) entonces
+            retornar forja_json("{\"ok\":true}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/nodos/actualizar-get") entonces
+        texto ruta_up = forja_ruta(solicitud)
+        texto coleccion_up_get = ""
+        texto id_up_get = ""
+        texto contenido_up_get = ""
+        si contiene_texto(ruta_up, "coleccion=") entonces
+            coleccion_up_get = extraer_despues_de(ruta_up, "coleccion=")
+            coleccion_up_get = extraer_antes_de(coleccion_up_get, "&")
+        fin_si
+        si contiene_texto(ruta_up, "id=") entonces
+            id_up_get = extraer_despues_de(ruta_up, "id=")
+            id_up_get = extraer_antes_de(id_up_get, "&")
+        fin_si
+        si contiene_texto(ruta_up, "contenido=") entonces
+            contenido_up_get = extraer_despues_de(ruta_up, "contenido=")
+            contenido_up_get = extraer_antes_de(contenido_up_get, "&")
+        fin_si
+        si nucleodb_actualizar(coleccion_up_get, id_up_get, contenido_up_get) entonces
+            retornar forja_json("{\"ok\":true}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si forja_es_post(solicitud, "/nodos/eliminar") entonces
+        texto cuerpo_del = solicitud
+        texto coleccion_del = ""
+        texto id_del = ""
+        si contiene_texto(cuerpo_del, "\"coleccion\":\"") entonces
+            coleccion_del = extraer_despues_de(cuerpo_del, "\"coleccion\":\"")
+            coleccion_del = extraer_antes_de(coleccion_del, "\"")
+        fin_si
+        si contiene_texto(cuerpo_del, "\"id\":\"") entonces
+            id_del = extraer_despues_de(cuerpo_del, "\"id\":\"")
+            id_del = extraer_antes_de(id_del, "\"")
+        fin_si
+        si nucleodb_eliminar(coleccion_del, id_del) entonces
+            retornar forja_json("{\"ok\":true}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/nodos/eliminar-get") entonces
+        texto ruta_del = forja_ruta(solicitud)
+        texto coleccion_del_get = ""
+        texto id_del_get = ""
+        si contiene_texto(ruta_del, "coleccion=") entonces
+            coleccion_del_get = extraer_despues_de(ruta_del, "coleccion=")
+            coleccion_del_get = extraer_antes_de(coleccion_del_get, "&")
+        fin_si
+        si contiene_texto(ruta_del, "id=") entonces
+            id_del_get = extraer_despues_de(ruta_del, "id=")
+            id_del_get = extraer_antes_de(id_del_get, "&")
+        fin_si
+        si nucleodb_eliminar(coleccion_del_get, id_del_get) entonces
+            retornar forja_json("{\"ok\":true}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/buscar") entonces
+        texto ruta_buscar = forja_ruta(solicitud)
+        texto coleccion_bus = ""
+        texto consulta_bus = ""
+        texto top_txt = ""
+        si contiene_texto(ruta_buscar, "coleccion=") entonces
+            coleccion_bus = extraer_despues_de(ruta_buscar, "coleccion=")
+            coleccion_bus = extraer_antes_de(coleccion_bus, "&")
+        fin_si
+        si contiene_texto(ruta_buscar, "q=") entonces
+            consulta_bus = extraer_despues_de(ruta_buscar, "q=")
+            consulta_bus = extraer_antes_de(consulta_bus, "&")
+        fin_si
+        si contiene_texto(ruta_buscar, "top=") entonces
+            top_txt = extraer_despues_de(ruta_buscar, "top=")
+            top_txt = extraer_antes_de(top_txt, "&")
+        fin_si
+        entero top_k = 10
+        si longitud_texto(top_txt) > 0 entonces
+            top_k = str_a_entero(top_txt)
+        fin_si
+        si top_k == 0 entonces
+            top_k = 10
+        fin_si
+        lista resultados = nucleodb_buscar_similar(coleccion_bus, consulta_bus, top_k)
+        texto json_resultados = "["
+        entero i_res = 0
+        mientras i_res < mem_lista_tamano(resultados) hacer
+            texto item_res = mem_lista_obtener(resultados, i_res)
+            json_resultados = concatenar(json_resultados, "\"")
+            json_resultados = concatenar(json_resultados, item_res)
+            json_resultados = concatenar(json_resultados, "\"")
+            si i_res < mem_lista_tamano(resultados) - 1 entonces
+                json_resultados = concatenar(json_resultados, ",")
+            fin_si
+            i_res = i_res + 1
+        fin_mientras
+        json_resultados = concatenar(json_resultados, "]")
+        retornar forja_json(json_resultados)
+    fin_si
+
+    si forja_es_post(solicitud, "/grafos/conectar") entonces
+        texto cuerpo_grafo = solicitud
+        texto desde = ""
+        texto hacia = ""
+        si contiene_texto(cuerpo_grafo, "\"desde\":\"") entonces
+            desde = extraer_despues_de(cuerpo_grafo, "\"desde\":\"")
+            desde = extraer_antes_de(desde, "\"")
+        fin_si
+        si contiene_texto(cuerpo_grafo, "\"hacia\":\"") entonces
+            hacia = extraer_despues_de(cuerpo_grafo, "\"hacia\":\"")
+            hacia = extraer_antes_de(hacia, "\"")
+        fin_si
+        si nucleodb_conectar(desde, hacia, 0.8) entonces
+            retornar forja_json("{\"ok\":true}")
+        fin_si
+        retornar forja_json("{\"ok\":false}")
+    fin_si
+
+    si estructura_es_get(solicitud, "/grafos/relacionados") entonces
+        texto ruta_rel = forja_ruta(solicitud)
+        texto id_rel = ""
+        texto profundidad_txt = ""
+        si contiene_texto(ruta_rel, "id=") entonces
+            id_rel = extraer_despues_de(ruta_rel, "id=")
+            id_rel = extraer_antes_de(id_rel, "&")
+        fin_si
+        si contiene_texto(ruta_rel, "profundidad=") entonces
+            profundidad_txt = extraer_despues_de(ruta_rel, "profundidad=")
+            profundidad_txt = extraer_antes_de(profundidad_txt, "&")
+        fin_si
+        entero profundidad = str_a_entero(profundidad_txt)
+        si profundidad == 0 entonces
+            profundidad = 2
+        fin_si
+        lista relacionados = nucleodb_relacionados(id_rel, profundidad)
+        texto json_rel = "["
+        entero i_rel = 0
+        mientras i_rel < mem_lista_tamano(relacionados) hacer
+            texto item_rel = mem_lista_obtener(relacionados, i_rel)
+            json_rel = concatenar(json_rel, "\"")
+            json_rel = concatenar(json_rel, item_rel)
+            json_rel = concatenar(json_rel, "\"")
+            si i_rel < mem_lista_tamano(relacionados) - 1 entonces
+                json_rel = concatenar(json_rel, ",")
+            fin_si
+            i_rel = i_rel + 1
+        fin_mientras
+        json_rel = concatenar(json_rel, "]")
+        retornar forja_json(json_rel)
+    fin_si
+
+    si estructura_es_get(solicitud, "/sistema/status") entonces
+        retornar forja_json("{\"estado\":\"ok\",\"motor\":\"NucleoDB\",\"coleccion_demo\":\"usuarios\",\"total_demo\":" + str_desde_numero(nucleodb_total("usuarios")) + "}")
+    fin_si
+
+    retornar forja_no_encontrado()
+fin_funcion

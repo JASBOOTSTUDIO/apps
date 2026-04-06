@@ -1,0 +1,47 @@
+# Utilidades de texto y listas enteras.
+enviar funcion rrhh_poner_entero_lista(lista<entero> L, entero idx, entero val) retorna entero
+    lista<entero> tmp = crear_lista()
+    entero i = 0
+    entero n = mem_lista_tamano(L)
+    mientras i < n hacer
+        si i == idx entonces
+            mem_lista_agregar(tmp, val)
+        sino
+            mem_lista_agregar(tmp, mem_lista_obtener(L, i))
+        fin_si
+        i += 1
+    fin_mientras
+    lista_limpiar(L)
+    i = 0
+    n = mem_lista_tamano(tmp)
+    mientras i < n hacer
+        mem_lista_agregar(L, mem_lista_obtener(tmp, i))
+        i += 1
+    fin_mientras
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_limpia_linea(texto s) retorna texto
+    si longitud(s) == 0 entonces
+        retornar s
+    fin_si
+    lista l1 = dividir_texto(s, "\r")
+    texto t1 = mem_lista_obtener(l1, 0)
+    lista l2 = dividir_texto(t1, "\n")
+    texto t2 = mem_lista_obtener(l2, 0)
+    retornar t2
+fin_funcion
+
+enviar funcion rrhh_trim_opcion(texto s) retorna texto
+    lista l = dividir_texto(s, " ")
+    entero i = 0
+    entero n = mem_lista_tamano(l)
+    mientras i < n hacer
+        texto chunk = mem_lista_obtener(l, i)
+        si longitud(chunk) > 0 entonces
+            retornar chunk
+        fin_si
+        i += 1
+    fin_mientras
+    retornar s
+fin_funcion

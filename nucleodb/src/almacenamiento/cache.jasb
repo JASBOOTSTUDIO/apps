@@ -1,0 +1,41 @@
+
+# ============================================================
+# nucleodb/src/almacenamiento/cache.jasb
+# Cache en memoria usando mapa de Jasboot
+# Clave: id_nodo  Valor: linea serializada del nodo
+# ============================================================
+
+# Cache global en mapa (clave → linea nodo)
+mapa cache_nodos = {}
+entero cache_hits = 0
+entero cache_misses = 0
+
+enviar funcion cache_guardar(texto id_nodo, texto linea) retorna bool
+    mapa_poner(cache_nodos, id_nodo, linea)
+    retornar verdadero
+fin_funcion
+
+enviar funcion cache_obtener(texto id_nodo) retorna texto
+    texto val = mapa_obtener(cache_nodos, id_nodo)
+    si longitud_texto(val) > 0 entonces
+        cache_hits = cache_hits + 1
+        retornar val
+    fin_si
+    cache_misses = cache_misses + 1
+    retornar ""
+fin_funcion
+
+enviar funcion cache_limpiar() retorna bool
+    cache_nodos = {}
+    cache_hits = 0
+    cache_misses = 0
+    retornar verdadero
+fin_funcion
+
+enviar funcion cache_hits_total() retorna entero
+    retornar cache_hits
+fin_funcion
+
+enviar funcion cache_misses_total() retorna entero
+    retornar cache_misses
+fin_funcion

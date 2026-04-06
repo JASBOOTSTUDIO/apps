@@ -1,0 +1,29 @@
+# Alta de empleado por consola (preguntas + rrhh_emp_alta + guardado).
+usar todo de "rrhh_empleados.jasb"
+usar todo de "rrhh_persist.jasb"
+
+enviar funcion rrhh_interactivo_agregar_empleado() retorna entero
+    imprimir_sin_salto "Nombre completo: "
+    ingresar_texto n3
+    imprimir_sin_salto "Documento (DNI/NIE/etc.): "
+    ingresar_texto d3
+    imprimir_sin_salto "Departamento: "
+    ingresar_texto p3
+    imprimir_sin_salto "Cargo: "
+    ingresar_texto c3
+    imprimir_sin_salto "Salario mensual base (centavos, ej. 250000 = 2500.00): "
+    ingresar_texto s3
+    g_buf_sal_cent = str_a_entero(s3)
+    entero r3 = rrhh_emp_alta(n3, d3, p3, c3)
+    si r3 == -1 entonces
+        imprimir "Error: limite de empleados alcanzado."
+    sino si r3 == -2 entonces
+        imprimir "Error: el nombre no puede estar vacio."
+    sino si r3 == -3 entonces
+        imprimir "Error: salario invalido."
+    sino
+        imprimir "Empleado creado. ID asignado (ver listado)."
+        rrhh_guardar_todo()
+    fin_si
+    retornar 1
+fin_funcion

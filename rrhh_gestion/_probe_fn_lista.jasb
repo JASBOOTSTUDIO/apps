@@ -1,0 +1,15 @@
+funcion probe_fn() retorna entero
+    lista<entero> ids = crear_lista()
+    lista<texto> noms = crear_lista()
+    mem_lista_agregar(ids, 1)
+    mem_lista_agregar(noms, "Ana")
+    texto ln = str_desde_numero(mem_lista_obtener(ids, 0))
+    ln = concatenar(ln, " | ")
+    ln = concatenar(ln, mem_lista_obtener(noms, 0))
+    imprimir ln
+    retornar 1
+fin_funcion
+
+principal
+    probe_fn()
+fin_principal

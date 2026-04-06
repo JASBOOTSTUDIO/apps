@@ -1,0 +1,58 @@
+# Consultas sobre el archivo: id máximo y búsqueda por id.
+usar todas de "const.jasb"
+
+enviar funcion crud_max_id() retorna entero
+    texto arch = crud_arch_resolver()
+    si existe_archivo(arch) == 0 entonces
+        retornar 0
+    fin_si
+    entero mx = 0
+    entero fh = abrir_archivo(arch, "r")
+    mientras 1 hacer
+        texto ln = leer_linea_archivo(fh)
+        si longitud(ln) == 0 entonces
+            entero fe = fin_archivo(fh)
+            si fe == 1 entonces
+                romper
+            fin_si
+            continuar
+        fin_si
+        lista campos = dividir_texto(ln, CRUD_SEP)
+        si mem_lista_tamano(campos) >= 1 entonces
+            entero v = str_a_entero(mem_lista_obtener(campos, 0))
+            si v > mx entonces
+                mx = v
+            fin_si
+        fin_si
+    fin_mientras
+    cerrar_archivo(fh)
+    retornar mx
+fin_funcion
+
+enviar funcion crud_buscar_linea_por_id(entero id) retorna texto
+    texto arch = crud_arch_resolver()
+    si existe_archivo(arch) == 0 entonces
+        retornar ""
+    fin_si
+    entero fh = abrir_archivo(arch, "r")
+    mientras 1 hacer
+        texto ln = leer_linea_archivo(fh)
+        si longitud(ln) == 0 entonces
+            entero fe2 = fin_archivo(fh)
+            si fe2 == 1 entonces
+                romper
+            fin_si
+            continuar
+        fin_si
+        lista cam = dividir_texto(ln, CRUD_SEP)
+        si mem_lista_tamano(cam) >= 1 entonces
+            entero eid = str_a_entero(mem_lista_obtener(cam, 0))
+            si eid == id entonces
+                cerrar_archivo(fh)
+                retornar ln
+            fin_si
+        fin_si
+    fin_mientras
+    cerrar_archivo(fh)
+    retornar ""
+fin_funcion

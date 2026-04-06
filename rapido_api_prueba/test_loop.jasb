@@ -1,0 +1,7 @@
+principal
+    entero i = 0
+    mientras i < 3 hacer
+        imprimir "LOOP " + i
+        i = i + 1
+    fin_mientras
+fin_principal

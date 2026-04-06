@@ -1,0 +1,5 @@
+# Constantes del colmado (ajuste aquí escala y rutas).
+enviar constante texto COLM_ARCHIVO = "colmado_inventario.tsv"
+enviar constante entero COLM_MAX_ITEMS = 2500
+enviar constante entero COLM_ALERTA_STOCK = 12
+enviar constante texto COLM_SEP = "|"

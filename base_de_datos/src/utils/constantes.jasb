@@ -1,0 +1,5 @@
+enviar constante flotante PI = 3.1416
+# enviar constante entero VELOCIDAD_LUZ = 299792458
+# enviar funcion calcular_area_circulo(radio) retorna flotante
+#     retornar PI * radio * radio 
+# fin_funcion

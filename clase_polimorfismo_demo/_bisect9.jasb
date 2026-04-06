@@ -1,0 +1,40 @@
+usar todas de "motor_mazmorra.jasb"
+clase Entidad
+    entero id
+    entero vitalidad
+    texto nombre_pub
+    funcion reaccionar
+fin_clase
+clase Jugador extiende Entidad
+    entero celda_x
+    entero celda_y
+    entero xp
+    entero rango
+fin_clase
+clase Monstruo extiende Entidad
+    entero furia
+    entero celda_x
+    entero celda_y
+fin_clase
+clase Tesoro extiende Entidad
+    entero monedas
+    entero ya_loot
+fin_clase
+clase Trampa extiende Tesoro
+    entero penal_hp
+fin_clase
+Jugador g_heroe
+Monstruo m_orco
+Tesoro cofre_oro
+Trampa hoyo_trampa
+funcion noop(entero e) retorna entero
+    retornar e
+fin_funcion
+principal
+    funcion rf
+    funcion dyn
+    rf = noop
+    g_heroe.reaccionar = rf
+    dyn = g_heroe.reaccionar
+    imprimir dyn(1)
+fin_principal

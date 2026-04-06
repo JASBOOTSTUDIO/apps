@@ -1,0 +1,70 @@
+# Rutas que leen .env en tiempo de peticion y llaman a Supabase REST.
+
+usar {
+    rapido_json,
+    rapido_json_codigo
+} de "..\\..\\..\\stdlib\\rapido\\rapido.jasb"
+
+usar {
+    dotenv_obtener
+} de "..\\..\\..\\stdlib\\dotenv\\dotenv.jasb"
+
+usar {
+    supabase_esta_configurado,
+    supabase_seleccionar,
+    supabase_codigo_http,
+    supabase_cuerpo
+} de "..\\..\\..\\stdlib\\supabase\\supabase_rest.jasb"
+
+enviar funcion api_supabase_estado(texto sol) retorna texto
+    si supabase_esta_configurado() == 1 entonces
+        retornar rapido_json("{\"supabase\":true}")
+    fin_si
+    retornar rapido_json("{\"supabase\":false}")
+fin_funcion
+
+// Llamada Supabase envuelta como tarea: `esperar` obtiene el texto (MVP sin planificador real).
+asincrono enviar funcion api_supabase_muestra_nucleo(texto tabla, texto consulta) retorna tarea<texto>
+    retornar supabase_seleccionar(tabla, consulta)
+fin_funcion
+
+enviar funcion api_supabase_muestra(texto sol) retorna texto
+    si supabase_esta_configurado() == 0 entonces
+        retornar rapido_json_codigo("503 Service Unavailable", "{\"error\":\"supabase_no_configurado\",\"hint\":\".env: SUPABASE_DATABASE_URL y SUPABASE_ANON_KEY\"}")
+    fin_si
+    intentar
+        texto tabla = dotenv_obtener("SUPABASE_TABLA_PRUEBA")
+        si longitud_texto(tabla) == 0 entonces
+            tabla = dotenv_obtener("SUPABASE_TABLA")
+        fin_si
+        si longitud_texto(tabla) == 0 entonces
+            retornar rapido_json_codigo("400 Bad Request", "{\"error\":\"falta_tabla\",\"hint\":\"SUPABASE_TABLA_PRUEBA o SUPABASE_TABLA en .env\"}")
+        fin_si
+        texto consulta = dotenv_obtener("SUPABASE_CONSULTA")
+        si longitud_texto(consulta) == 0 entonces
+            consulta = "?select=*&limit=10"
+        fin_si
+        si extraer_subtexto(consulta, 0, 1) != "?" entonces
+            consulta = concatenar("?", consulta)
+        fin_si
+        texto resp = esperar api_supabase_muestra_nucleo(tabla, consulta)
+        si longitud_texto(resp) == 0 entonces
+            retornar rapido_json_codigo("502 Bad Gateway", "{\"error\":\"sin_respuesta_supabase\"}")
+        fin_si
+        entero cod = supabase_codigo_http(resp)
+        si cod >= 400 entonces
+            texto err = "{\"error\":\"supabase_http\",\"codigo\":"
+            err = concatenar(err, str_desde_numero(cod))
+            err = concatenar(err, "}")
+            retornar rapido_json_codigo("502 Bad Gateway", err)
+        fin_si
+        retornar rapido_json(supabase_cuerpo(resp))
+    atrapar err
+        // Solo en error poco frecuente (evita llenar stdout cuando se usa tuberia tipo Node).
+        si longitud_texto(err) > 0 entonces
+            imprimir_sin_salto "\amar[ERROR]\norm api_supabase_muestra atrapar: "
+            imprimir err
+        fin_si
+        retornar rapido_json_codigo("500 Internal Server Error", "{\"error\":\"error_interno\",\"hint\":\"excepcion en muestra; revisar consola del servidor\"}")
+    fin_intentar
+fin_funcion

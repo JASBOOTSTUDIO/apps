@@ -1,0 +1,117 @@
+# ============================================================
+# nucleodb/src/nucleo/api.jasb
+# Punto de entrada del SDK de NúcleoDB
+# ============================================================
+
+usar {ndb_insertar, ndb_leer_todos, ndb_buscar_por_id, ndb_actualizar_contenido, ndb_eliminar_por_id, ndb_contar} de "../almacenamiento/archivos.jasb"
+usar {wal_registrar} de "../almacenamiento/wal.jasb"
+usar {vec_indexar, vec_buscar_similares, vec_mantenimiento} de "./vectores.jasb"
+usar {grafo_conectar, grafo_relacionados, grafo_fuerza} de "./grafos.jasb"
+usar {buscar_semantico} de "../busqueda/semantica.jasb"
+usar {buscar_hibrido} de "../busqueda/hibrida.jasb"
+
+# === CRUD de Nodos ===
+
+enviar funcion nucleodb_guardar(texto coleccion, texto id, texto nombre, texto contenido) retorna bool
+    texto id_nodo = coleccion + "_" + id
+    wal_registrar("INS", coleccion, id_nodo)
+    
+    bool guardado = ndb_insertar(coleccion, id_nodo, nombre, contenido)
+    
+    si guardado entonces
+        # Indexar en el motor vectorial
+        vec_indexar(id_nodo, contenido)
+        
+        # Guardar metadatos en la JMN para busquedas directas
+        recordar id_nodo + "_nombre" con valor nombre
+        recordar id_nodo + "_coleccion" con valor coleccion
+    fin_si
+    
+    retornar guardado
+fin_funcion
+
+enviar funcion nucleodb_obtener(texto coleccion, texto id) retorna texto
+    texto id_nodo = coleccion + "_" + id
+    texto linea_nodo = ndb_buscar_por_id(coleccion, id_nodo)
+    retornar linea_nodo
+fin_funcion
+
+enviar funcion nucleodb_actualizar(texto coleccion, texto id, texto nuevo_contenido) retorna bool
+    texto id_nodo = coleccion + "_" + id
+    wal_registrar("UPD", coleccion, id_nodo)
+    texto linea_actual = ndb_buscar_por_id(coleccion, id_nodo)
+    si longitud_texto(linea_actual) == 0 entonces
+        retornar falso
+    fin_si
+    bool actualizado = ndb_actualizar_contenido(coleccion, id_nodo, nuevo_contenido)
+    si actualizado entonces
+        texto nombre = ndb_buscar_por_id(coleccion, id_nodo)
+        recordar id_nodo con valor nuevo_contenido
+        vec_indexar(id_nodo, nuevo_contenido)
+    fin_si
+    retornar actualizado
+fin_funcion
+
+enviar funcion nucleodb_eliminar(texto coleccion, texto id) retorna bool
+    texto id_nodo = coleccion + "_" + id
+    wal_registrar("DEL", coleccion, id_nodo)
+    bool eliminado = ndb_eliminar_por_id(coleccion, id_nodo)
+    si eliminado entonces
+        penalizar(id_nodo, 100)
+    fin_si
+    retornar eliminado
+fin_funcion
+
+# === Búsqueda ===
+
+enviar funcion nucleodb_buscar_similar(texto coleccion, texto consulta, entero top_k) retorna lista
+    retornar buscar_semantico(coleccion, consulta, top_k)
+fin_funcion
+
+enviar funcion nucleodb_buscar_hibrida(texto coleccion, texto consulta, texto campo, entero valor_min) retorna lista
+    retornar buscar_hibrido(coleccion, consulta, campo, valor_min)
+fin_funcion
+
+enviar funcion nucleodb_buscar_donde(texto coleccion, texto campo, texto filtro) retorna lista
+    lista resultados = mem_lista_crear()
+    lista todos = ndb_leer_todos(coleccion)
+    
+    entero i = 0
+    mientras i < mem_lista_tamano(todos) hacer
+        texto linea = mem_lista_obtener(todos, i)
+        
+        # Filtro burdo: vemos si la linea contiene el valor
+        si contiene_texto(linea, filtro) entonces
+            mem_lista_agregar(resultados, linea)
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+    
+    retornar resultados
+fin_funcion
+
+# === Grafo ===
+
+enviar funcion nucleodb_conectar(texto desde, texto hacia, flotante fuerza_rel) retorna bool
+    retornar grafo_conectar(desde, hacia, fuerza_rel)
+fin_funcion
+
+enviar funcion nucleodb_relacionados(texto id_nodo, entero profundidad) retorna lista
+    retornar grafo_relacionados(id_nodo, profundidad)
+fin_funcion
+
+enviar funcion nucleodb_fuerza_relacion(texto desde, texto hacia) retorna flotante
+    retornar grafo_fuerza(desde, hacia)
+fin_funcion
+
+# === Mantenimiento ===
+
+enviar funcion nucleodb_mantenimiento() retorna bool
+    vec_mantenimiento()
+    retornar verdadero
+fin_funcion
+
+enviar funcion nucleodb_total(texto coleccion) retorna entero
+    retornar ndb_contar(coleccion)
+fin_funcion

@@ -1,0 +1,108 @@
+# ==========================================================
+# AURORA-IA V1.0.0: INTELIGENCIA PROFESIONAL SENIOR
+# ==========================================================
+
+# Módulo de Entrenamiento Individual
+funcion entrenar_con_archivo(texto la_ruta) retorna entero
+    entero el_fh = abrir_archivo(la_ruta, "r")
+    si el_fh == 0 entonces
+        retornar 0
+    fin_si
+
+    imprimir "Aurora: Absorbiendo conocimiento de ${la_ruta}"
+    
+    mientras fin_archivo(el_fh) == 0 hacer
+        texto la_linea = leer_linea_archivo(el_fh)
+        si longitud(la_linea) > 5 entonces
+            entero la_pos = buscar_en_texto(la_linea, " : ")
+            si la_pos > 0 entonces
+                texto la_clave = extraer_subtexto(la_linea, 0, la_pos)
+                entero el_inicio = la_pos + 3
+                texto el_cont = extraer_subtexto(la_linea, el_inicio, longitud(la_linea))
+                
+                # Persistencia dinámica
+                recordar la_clave con valor el_cont
+                aprender la_clave con peso 4.0
+            sino
+                recordar la_linea
+            fin_si
+        fin_si
+    fin_mientras
+    cerrar_archivo(el_fh)
+    retornar 1
+fin_funcion
+
+# Módulo de Escaneo Masivo
+funcion escaneo_masivo(texto el_glob) retorna entero
+    lista los_archivos = listar_archivos(el_glob)
+    entero el_total = longitud(los_archivos)
+    entero el_indice = 0
+    mientras el_indice < el_total hacer
+        texto una_ruta = los_archivos[el_indice]
+        entero el_ok = entrenar_con_archivo(una_ruta)
+        el_indice = el_indice + 1
+    fin_mientras
+    consolidar_memoria()
+    imprimir "Aurora: Sincronización completa."
+    retornar 1
+fin_funcion
+
+principal
+    # Capacidad Senior: 32k neuronas
+    crear_memoria("apps/aurora_ia/aurora_memoria.jmn", 32768, 131072)
+    
+    imprimir "**********************************************************"
+    imprimir "* AURORA-IA V1.0.0: CONCIENCIA PROFESIONAL               *"
+    imprimir "**********************************************************"
+    imprimir "Aurora: Sistemas en línea. Lista para razonar."
+    imprimir ""
+
+    mientras 1 == 1 hacer
+        imprimir "--- MENÚ SENIOR ---"
+        imprimir "[1] Consultar Sabiduría"
+        imprimir "[2] Sincronizar Datasets (C, Árboles, Cultura, Biblia)"
+        imprimir "[3] Salir"
+        imprimir "Acción: " sin_salto
+        
+        texto la_opc = ""
+        ingresar_texto la_opc
+        
+        si la_opc == "1" entonces
+            imprimir "Aurora: Adelante, comparte tu inquietud. ('volver')"
+            mientras 1 == 1 hacer
+                imprimir "Tú: " sin_salto
+                texto el_input = ""
+                ingresar_texto el_input
+                si el_input == "volver" entonces romper fin_si
+                
+                buscar el_input
+                si resultado != "" entonces
+                    reforzar el_input
+                    imprimir "Aurora: ${resultado}"
+                sino
+                    imprimir "Aurora: Aún no poseo ese dato. ¿Qué es '${el_input}'?"
+                    imprimir "Tú (Explicación): " sin_salto
+                    texto la_def = ""
+                    ingresar_texto la_def
+                    recordar el_input con valor la_def
+                    asociar el_input con la_def
+                    imprimir "Aurora: Conocimiento integrado."
+                fin_si
+                consolidar_memoria()
+            fin_mientras
+        fin_si
+        
+        si la_opc == "2" entonces
+            entero r = escaneo_masivo("apps/aurora_ia/entrenamiento/*.txt")
+        fin_si
+
+        si la_opc == "3" entonces
+            imprimir "Aurora: Consolidando... Hasta pronto."
+            romper
+        fin_si
+        
+        imprimir ""
+    fin_mientras
+
+    cerrar_memoria()
+fin_principal

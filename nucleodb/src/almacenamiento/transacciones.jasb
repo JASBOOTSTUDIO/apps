@@ -1,0 +1,64 @@
+
+# ============================================================
+# nucleodb/src/almacenamiento/transacciones.jasb
+# Transacciones atomicas — iniciar / confirmar / revertir
+# ============================================================
+
+usar {wal_registrar, wal_leer_pendientes, WAL_CONFIRMAR, WAL_REVERTIR} de "./wal.jasb"
+
+# Estado global de transaccion
+bool transaccion_activa = falso
+lista operaciones_pendientes = mem_lista_crear()
+
+enviar funcion transaccion_iniciar() retorna bool
+    si transaccion_activa entonces
+        imprimir "\rojo[NucleoDB] Error: ya hay una transaccion activa\norm"
+        retornar falso
+    fin_si
+    transaccion_activa = verdadero
+    operaciones_pendientes = mem_lista_crear()
+    retornar verdadero
+fin_funcion
+
+enviar funcion transaccion_agregar_op(texto op) retorna bool
+    si no transaccion_activa entonces
+        imprimir "\rojo[NucleoDB] Error: no hay transaccion activa\norm"
+        retornar falso
+    fin_si
+    mem_lista_agregar(operaciones_pendientes, op)
+    retornar verdadero
+fin_funcion
+
+enviar funcion transaccion_confirmar() retorna bool
+    si no transaccion_activa entonces
+        retornar falso
+    fin_si
+    entero i = 0
+    mientras i < mem_lista_tamano(operaciones_pendientes) hacer
+        texto op = mem_lista_obtener(operaciones_pendientes, i)
+        wal_registrar(WAL_CONFIRMAR, "transaccion", op)
+        i = i + 1
+    fin_mientras
+    transaccion_activa = falso
+    operaciones_pendientes = mem_lista_crear()
+    retornar verdadero
+fin_funcion
+
+enviar funcion transaccion_revertir() retorna bool
+    si no transaccion_activa entonces
+        retornar falso
+    fin_si
+    entero i = 0
+    mientras i < mem_lista_tamano(operaciones_pendientes) hacer
+        texto op = mem_lista_obtener(operaciones_pendientes, i)
+        wal_registrar(WAL_REVERTIR, "transaccion", op)
+        i = i + 1
+    fin_mientras
+    transaccion_activa = falso
+    operaciones_pendientes = mem_lista_crear()
+    retornar verdadero
+fin_funcion
+
+enviar funcion transaccion_esta_activa() retorna bool
+    retornar transaccion_activa
+fin_funcion

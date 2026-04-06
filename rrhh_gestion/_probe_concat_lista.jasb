@@ -1,0 +1,7 @@
+principal
+    lista<texto> L = crear_lista()
+    mem_lista_agregar(L, "hola")
+    texto t = mem_lista_obtener(L, 0)
+    texto u = concatenar(t, "!")
+    imprimir u
+fin_principal

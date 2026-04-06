@@ -1,0 +1,13 @@
+principal
+    si (1 == 1) o (1 == 0) entonces
+        imprimir "OR FUNCIONA"
+    sino
+        imprimir "OR ROTO"
+    fin_si
+    
+    si (1 == 0) o (1 == 0) entonces
+        imprimir "OR ROTO 2"
+    sino
+        imprimir "OR FUNCIONA 2"
+    fin_si
+fin_principal

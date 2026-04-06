@@ -1,0 +1,217 @@
+# Nóminas: líneas por empleado/periodo, TSV, liquidación.
+usar todo de "rrhh_const.jasb"
+usar todo de "rrhh_estado.jasb"
+usar todo de "rrhh_util.jasb"
+usar todo de "rrhh_empleados.jasb"
+
+enviar funcion rrhh_ix_nomina(entero id) retorna entero
+    entero i = 0
+    entero n = mem_lista_tamano(gn_ids)
+    mientras i < n hacer
+        si mem_lista_obtener(gn_ids, i) == id entonces
+            retornar i
+        fin_si
+        i += 1
+    fin_mientras
+    retornar -1
+fin_funcion
+
+enviar funcion rrhh_nom_linea(entero i) retorna texto
+    texto w0 = str_desde_numero(mem_lista_obtener(gn_ids, i))
+    texto q1 = concatenar(w0, RRHH_SEP)
+    texto q2 = concatenar(q1, str_desde_numero(mem_lista_obtener(gn_eids, i)))
+    texto q3 = concatenar(q2, RRHH_SEP)
+    texto q4 = concatenar(q3, mem_lista_obtener(gn_pers, i))
+    texto q5 = concatenar(q4, RRHH_SEP)
+    texto q6 = concatenar(q5, str_desde_numero(mem_lista_obtener(gn_brut, i)))
+    texto q7 = concatenar(q6, RRHH_SEP)
+    texto q8 = concatenar(q7, str_desde_numero(mem_lista_obtener(gn_deds, i)))
+    texto q9 = concatenar(q8, RRHH_SEP)
+    texto q10 = concatenar(q9, str_desde_numero(mem_lista_obtener(gn_liqs, i)))
+    retornar q10
+fin_funcion
+
+enviar funcion rrhh_nom_parse(texto linea, entero maxid) retorna entero
+    lista tok = dividir_texto(linea, RRHH_SEP)
+    si mem_lista_tamano(tok) < 6 entonces
+        retornar maxid
+    fin_si
+    entero pid = str_a_entero(mem_lista_obtener(tok, 0))
+    entero eid = str_a_entero(mem_lista_obtener(tok, 1))
+    texto per = mem_lista_obtener(tok, 2)
+    entero br = str_a_entero(mem_lista_obtener(tok, 3))
+    entero dd = str_a_entero(mem_lista_obtener(tok, 4))
+    entero lq = str_a_entero(mem_lista_obtener(tok, 5))
+    mem_lista_agregar(gn_ids, pid)
+    mem_lista_agregar(gn_eids, eid)
+    mem_lista_agregar(gn_pers, per)
+    mem_lista_agregar(gn_brut, br)
+    mem_lista_agregar(gn_deds, dd)
+    mem_lista_agregar(gn_liqs, lq)
+    entero mx = maxid
+    si pid > mx entonces
+        mx = pid
+    fin_si
+    retornar mx
+fin_funcion
+
+enviar funcion rrhh_limpiar_nom() retorna entero
+    lista_limpiar(gn_ids)
+    lista_limpiar(gn_eids)
+    lista_limpiar(gn_pers)
+    lista_limpiar(gn_brut)
+    lista_limpiar(gn_deds)
+    lista_limpiar(gn_liqs)
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_cargar_nom() retorna entero
+    si existe_archivo(RRHH_ARCH_NOM) == 0 entonces
+        rrhh_limpiar_nom()
+        g_next_nom_id = 1
+        retornar 1
+    fin_si
+    texto modo = "r"
+    entero fh = abrir_archivo(RRHH_ARCH_NOM, modo)
+    si fh == 0 entonces
+        retornar 0
+    fin_si
+    rrhh_limpiar_nom()
+    entero maxid = 0
+    entero primera = 1
+    mientras 1 hacer
+        texto ln = leer_linea_archivo(fh)
+        si longitud(ln) == 0 entonces
+            si fin_archivo(fh) == 1 entonces
+                romper
+            fin_si
+            continuar
+        fin_si
+        si primera == 1 entonces
+            primera = 0
+            si contiene_texto(ln, "bruto_cent") == 1 entonces
+                continuar
+            fin_si
+        fin_si
+        maxid = rrhh_nom_parse(ln, maxid)
+    fin_mientras
+    cerrar_archivo(fh)
+    g_next_nom_id = maxid + 1
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_guardar_nom() retorna entero
+    texto modo = "w"
+    entero fh = abrir_archivo(RRHH_ARCH_NOM, modo)
+    si fh == 0 entonces
+        retornar 0
+    fin_si
+    texto hdr = "id|empleado_id|periodo|bruto_cent|deducciones_cent|liquidad"
+    escribir_archivo(hdr, fh)
+    escribir_archivo("\n", fh)
+    entero i = 0
+    entero n = mem_lista_tamano(gn_ids)
+    mientras i < n hacer
+        texto ln = rrhh_nom_linea(i)
+        escribir_archivo(ln, fh)
+        escribir_archivo("\n", fh)
+        i += 1
+    fin_mientras
+    cerrar_archivo(fh)
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_nom_agregar(entero eid, texto periodo) retorna entero
+    si mem_lista_tamano(gn_ids) >= RRHH_MAX_NOM entonces
+        retornar -1
+    fin_si
+    entero ix = rrhh_ix_empleado(eid)
+    si ix < 0 o mem_lista_obtener(ge_acts, ix) != 1 entonces
+        retornar -2
+    fin_si
+    si longitud(periodo) == 0 entonces
+        retornar -3
+    fin_si
+    si g_buf_bruto_cent < 0 o g_buf_ded_cent < 0 entonces
+        retornar -4
+    fin_si
+    si g_buf_ded_cent > g_buf_bruto_cent entonces
+        retornar -5
+    fin_si
+    entero nid = g_next_nom_id
+    mem_lista_agregar(gn_ids, nid)
+    mem_lista_agregar(gn_eids, eid)
+    mem_lista_agregar(gn_pers, periodo)
+    mem_lista_agregar(gn_brut, g_buf_bruto_cent)
+    mem_lista_agregar(gn_deds, g_buf_ded_cent)
+    mem_lista_agregar(gn_liqs, 0)
+    g_next_nom_id += 1
+    retornar nid
+fin_funcion
+
+enviar funcion rrhh_nom_liquidar(entero nid) retorna entero
+    entero ix = rrhh_ix_nomina(nid)
+    si ix < 0 entonces
+        retornar 0
+    fin_si
+    rrhh_poner_entero_lista(gn_liqs, ix, 1)
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_listar_nom_empleado(entero eid) retorna entero
+    imprimir "NominaID | EmpID | Periodo | Bruto | Ded | Neto(ctvs) | Liquidada"
+    entero i = 0
+    entero n = mem_lista_tamano(gn_ids)
+    mientras i < n hacer
+        si mem_lista_obtener(gn_eids, i) == eid entonces
+            entero br = mem_lista_obtener(gn_brut, i)
+            entero dd = mem_lista_obtener(gn_deds, i)
+            entero nt = br - dd
+            texto ln = str_desde_numero(mem_lista_obtener(gn_ids, i))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(eid))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, mem_lista_obtener(gn_pers, i))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(br))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(dd))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(nt))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(mem_lista_obtener(gn_liqs, i)))
+            imprimir ln
+        fin_si
+        i += 1
+    fin_mientras
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_listar_nom_periodo(texto per) retorna entero
+    imprimir "NominaID | EmpID | Periodo | Bruto | Ded | Neto | Liq"
+    entero i = 0
+    entero n = mem_lista_tamano(gn_ids)
+    mientras i < n hacer
+        si mem_lista_obtener(gn_pers, i) == per entonces
+            entero br = mem_lista_obtener(gn_brut, i)
+            entero dd = mem_lista_obtener(gn_deds, i)
+            entero nt = br - dd
+            texto ln = str_desde_numero(mem_lista_obtener(gn_ids, i))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(mem_lista_obtener(gn_eids, i)))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, per)
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(br))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(dd))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(nt))
+            ln = concatenar(ln, " | ")
+            ln = concatenar(ln, str_desde_numero(mem_lista_obtener(gn_liqs, i)))
+            imprimir ln
+        fin_si
+        i += 1
+    fin_mientras
+    retornar 1
+fin_funcion

@@ -1,0 +1,15 @@
+usar todo de "mod/rrhh_const.jasb"
+usar todo de "mod/rrhh_estado.jasb"
+usar todo de "mod/rrhh_util.jasb"
+usar todo de "mod/rrhh_empleados.jasb"
+usar todo de "mod/rrhh_probe_fn.jasb"
+
+principal
+    rrhh_init()
+    rrhh_limpiar_emp()
+    g_next_emp_id = 1
+    g_buf_sal_cent = 100
+    rrhh_emp_alta("Ana", "D1", "Dep", "Car")
+    texto t = rrhh_probe_line(0)
+    imprimir t
+fin_principal

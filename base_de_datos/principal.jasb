@@ -1,0 +1,14 @@
+/*
+* Archivo: principal.jasb
+* Descripción: Archivo principal de la aplicación Base de Datos que muestra el valor de PI importado desde el módulo de constantes.
+*/
+usar {PI} de "./src/utils/constantes.jasb"
+usar {menu_principal} de "./src/utils/menu.jasb"
+
+principal
+    # limpiar_consola()
+    imprimir "\n\nBase de Datos - Principal"
+    llamar menu_principal()
+
+
+fin_principal

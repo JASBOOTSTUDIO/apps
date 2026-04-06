@@ -1,0 +1,9 @@
+usar todo de "rrhh_const.jasb"
+usar todo de "rrhh_estado.jasb"
+
+enviar funcion rrhh_probe_line(entero i) retorna texto
+    texto w0 = str_desde_numero(mem_lista_obtener(ge_ids, i))
+    texto p1 = concatenar(w0, RRHH_SEP)
+    texto p2 = concatenar(p1, mem_lista_obtener(ge_noms, i))
+    retornar p2
+fin_funcion

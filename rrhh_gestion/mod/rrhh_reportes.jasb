@@ -1,0 +1,44 @@
+# Resumen estadístico y datos de ejemplo iniciales.
+usar todo de "rrhh_const.jasb"
+usar todo de "rrhh_estado.jasb"
+usar todo de "rrhh_empleados.jasb"
+
+enviar funcion rrhh_resumen() retorna entero
+    entero activos = 0
+    entero masa = 0
+    entero i = 0
+    entero n = mem_lista_tamano(ge_ids)
+    mientras i < n hacer
+        si mem_lista_obtener(ge_acts, i) == 1 entonces
+            activos += 1
+            masa += mem_lista_obtener(ge_sals, i)
+        fin_si
+        i += 1
+    fin_mientras
+    imprimir "--- Resumen RRHH ---"
+    texto t1 = "Empleados activos: "
+    imprimir t1 + str_desde_numero(activos)
+    texto t2 = "Masa salarial mensual ref. (suma salarios base, centavos): "
+    imprimir t2 + str_desde_numero(masa)
+    entero nn = mem_lista_tamano(gn_ids)
+    texto t3 = "Registros de nomina total: "
+    imprimir t3 + str_desde_numero(nn)
+    si termina_con(RRHH_ARCH_EMP, ".tsv") == 1 y termina_con(RRHH_ARCH_NOM, ".tsv") == 1 entonces
+        imprimir "(Ficheros de datos con extension .tsv — listo para hoja de calculo.)"
+    fin_si
+    retornar 1
+fin_funcion
+
+enviar funcion rrhh_semilla() retorna entero
+    si mem_lista_tamano(ge_ids) > 0 entonces
+        retornar 1
+    fin_si
+    g_buf_sal_cent = 4500000
+    rrhh_emp_alta("Ana Gomez", "DOC-1001", "Administracion", "Directora RRHH")
+    g_buf_sal_cent = 3800000
+    rrhh_emp_alta("Luis Perez", "DOC-1002", "Operaciones", "Coordinador")
+    g_buf_sal_cent = 2900000
+    rrhh_emp_alta("Marta Ruiz", "DOC-1003", "Finanzas", "Analista")
+    imprimir "(Datos de ejemplo cargados; puede borrarlos o sustituirlos.)"
+    retornar 1
+fin_funcion

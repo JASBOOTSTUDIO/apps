@@ -1,0 +1,50 @@
+# ============================================================
+# nucleodb/src/nucleo/grafos.jasb
+# Motor de grafos usando mem_asociar de la JMN
+# ============================================================
+
+enviar funcion grafo_conectar(texto desde, texto hacia, flotante fuerza_rel) retorna bool
+    mem_asociar(desde, hacia, fuerza_rel)
+    # Persistir en archivo .grf
+    entero archivo = fs_abrir("data/grafos/conexiones.grf", "a")
+    si archivo == 0 entonces
+        retornar falso
+    fin_si
+    texto ts = str_desde_numero(obtener_timestamp())
+    texto linea = desde + "|" + hacia + "|" + str_desde_numero(fuerza_rel) + "|" + ts + "\n"
+    fs_escribir(linea, archivo)
+    fs_cerrar(archivo)
+    retornar verdadero
+fin_funcion
+
+enviar funcion grafo_desconectar(texto desde, texto hacia) retorna bool
+    # Penalizar la conexion hasta peso 0 (o cercano)
+    penalizar(desde, 100)
+    retornar verdadero
+fin_funcion
+
+enviar funcion grafo_fuerza(texto desde, texto hacia) retorna flotante
+    retornar mem_obtener_fuerza(desde, hacia)
+fin_funcion
+
+enviar funcion grafo_relacionados(texto id_nodo, entero profundidad) retorna lista
+    # Usar propagar_activacion con BFS para encontrar la vecindad
+    propagar_activacion(id_nodo)
+    lista relacionados = mem_lista_crear()
+    entero total = rastro_activacion_tamano()
+    entero i = 0
+    mientras i < total hacer
+        texto id_rel = rastro_activacion_obtener(i)
+        # Excluir el propio nodo origen
+        si id_rel != id_nodo entonces
+            mem_lista_agregar(relacionados, id_rel)
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar relacionados
+fin_funcion
+
+enviar funcion grafo_camino_existe(texto desde, texto hacia) retorna bool
+    flotante fuerza = mem_obtener_fuerza(desde, hacia)
+    retornar fuerza > 0.0
+fin_funcion

@@ -1,0 +1,21 @@
+# Modulo: utilidades exportadas (usar desde simulador_polimorfico.jasb).
+
+enviar funcion mm_escala_evento(entero base, entero ronda) retorna entero
+    retornar base + (ronda * 3)
+fin_funcion
+
+enviar funcion mm_texto_evento(texto etiqueta, entero cod) retorna texto
+    texto t1 = concatenar(etiqueta, " :: ev ")
+    texto t2 = concatenar(t1, str_desde_numero(cod))
+    retornar t2
+fin_funcion
+
+enviar funcion mm_clamp_vida(entero v, entero vmax) retorna entero
+    si v > vmax entonces
+        retornar vmax
+    fin_si
+    si v < 0 entonces
+        retornar 0
+    fin_si
+    retornar v
+fin_funcion

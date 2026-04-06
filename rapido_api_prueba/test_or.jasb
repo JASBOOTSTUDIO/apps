@@ -1,0 +1,22 @@
+principal
+    imprimir "CASO 1: (1 == 1 o 1 == 0)"
+    si 1 == 1 o 1 == 0 entonces
+        imprimir "  - RESULTADO: VERDADERO (OK)"
+    sino
+        imprimir "  - RESULTADO: FALSO (FALLO)"
+    fin_si
+
+    imprimir "CASO 2: (0 == 1 o 1 == 1)"
+    si 0 == 1 o 1 == 1 entonces
+        imprimir "  - RESULTADO: VERDADERO (OK)"
+    sino
+        imprimir "  - RESULTADO: FALSO (FALLO)"
+    fin_si
+
+    imprimir "CASO 3: (0 == 1 o 0 == 1)"
+    si 1 == 0 o 2 == 1 entonces
+        imprimir "  - RESULTADO: VERDADERO (FALLO)"
+    sino
+        imprimir "  - RESULTADO: FALSO (OK)"
+    fin_si
+fin_principal

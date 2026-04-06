@@ -1,0 +1,8 @@
+enviar funcion menu_principal()
+    limpiar_consola()
+    imprimir "\n\n ======== Menú Principal ========"
+    imprimir "1. Iniciar sesión"
+    imprimir "2. Registrarse"
+    imprimir "3. Configuración"
+    imprimir "4. Salir"
+fin_funcion
