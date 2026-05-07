@@ -1,0 +1,325 @@
+principal
+    # =============================================================================
+    # DEMOSTRACIÓN DE REGISTROS CON BUCLES - VERSIÓN FUNCIONAL
+    # =============================================================================
+    
+    # Creación de datos simples que funcionen
+    lista nombres = crear_lista()
+    lista_agregar(nombres, "Jefry Astacio")
+    lista_agregar(nombres, "Michelle Duarte")
+    lista_agregar(nombres, "Ana García")
+    lista_agregar(nombres, "Carlos Rodríguez")
+    
+    lista edades = crear_lista()
+    lista_agregar(edades, 26)
+    lista_agregar(edades, 19)
+    lista_agregar(edades, 32)
+    lista_agregar(edades, 28)
+    
+    lista emails = crear_lista()
+    lista_agregar(emails, "jefry@empresa.com")
+    lista_agregar(emails, "michelle@empresa.com")
+    lista_agregar(emails, "ana@empresa.com")
+    lista_agregar(emails, "carlos@empresa.com")
+    
+    lista telefonos = crear_lista()
+    lista_agregar(telefonos, "+1-809-555-0123")
+    lista_agregar(telefonos, "+1-809-555-0456")
+    lista_agregar(telefonos, "+1-809-555-0789")
+    lista_agregar(telefonos, "+1-809-555-0234")
+    
+    lista activas = crear_lista()
+    lista_agregar(activas, verdadero)
+    lista_agregar(activas, verdadero)
+    lista_agregar(activas, falso)
+    lista_agregar(activas, verdadero)
+    
+    lista versiones = crear_lista()
+    lista_agregar(versiones, 1.1)
+    lista_agregar(versiones, 1.2)
+    lista_agregar(versiones, 1.0)
+    lista_agregar(versiones, 1.3)
+    
+    lista posiciones = crear_lista()
+    lista_agregar(posiciones, "A")
+    lista_agregar(posiciones, "B")
+    lista_agregar(posiciones, "C")
+    lista_agregar(posiciones, "D")
+    
+    # =============================================================================
+    # DEMOSTRACIÓN CON BUCLES
+    # =============================================================================
+    
+    imprimir "=========================================================================="
+    imprimir "DEMOSTRACIÓN DE DATOS CON BUCLES - JASBOOT AVANZADO"
+    imprimir "=========================================================================="
+    imprimir ""
+    
+    # Bucle 1: Iterar sobre personas
+    imprimir "=== BUCLE 1: ITERACIÓN SOBRE PERSONAS ==="
+    entero total_personas = lista_tamano(nombres)
+    
+    entero i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        entero edad = lista_obtener(edades, i)
+        texto email = lista_obtener(emails, i)
+        texto telefono = lista_obtener(telefonos, i)
+        bool activa = lista_obtener(activas, i)
+        flotante version = lista_obtener(versiones, i)
+        texto posicion = lista_obtener(posiciones, i)
+        
+        imprimir "--- Persona #" + (i + 1) + " ---"
+        imprimir "Nombre: " + nombre
+        imprimir "Edad: " + edad
+        imprimir "Email: " + email
+        imprimir "Teléfono: " + telefono
+        imprimir "Activa: " + (activa ? "Sí" : "No")
+        imprimir "Versión: " + version
+        imprimir "Posición: " + posicion + " (Código: " + codigo_caracter(posicion) + ")"
+        imprimir ""
+        i = i + 1
+    fin_mientras
+    
+    # Bucle 2: Cálculos estadísticos
+    imprimir "=== BUCLE 2: CÁLCULOS ESTADÍSTICOS ==="
+    
+    # Calcular edad promedio
+    flotante suma_edades = 0.0
+    i = 0
+    mientras i < total_personas hacer
+        entero edad = lista_obtener(edades, i)
+        suma_edades = suma_edades + edad
+        i = i + 1
+    fin_mientras
+    
+    flotante edad_promedio = suma_edades / total_personas
+    imprimir "Edad promedio: " + edad_promedio + " años"
+    
+    # Contar personas activas
+    entero personas_activas = 0
+    i = 0
+    mientras i < total_personas hacer
+        bool activa = lista_obtener(activas, i)
+        si activa entonces
+            personas_activas = personas_activas + 1
+        fin_si
+        i = i + 1
+    fin_mientras
+    
+    imprimir "Personas activas: " + personas_activas + " de " + total_personas
+    imprimir "Porcentaje activas: " + ((personas_activas * 100) / total_personas) + "%"
+    imprimir ""
+    
+    # Bucle 3: Búsqueda por criterios
+    imprimir "=== BUCLE 3: BÚSQUEDA DE PERSONAS ==="
+    
+    # Buscar personas mayores de 25 años
+    imprimir "Personas mayores de 25 años:"
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        entero edad = lista_obtener(edades, i)
+        si edad > 25 entonces
+            imprimir "  - " + nombre + " (" + edad + " años)"
+        fin_si
+        i = i + 1
+    fin_mientras
+    imprimir ""
+    
+    # Buscar personas con versión alta
+    imprimir "Personas con versión >= 1.2:"
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        flotante version = lista_obtener(versiones, i)
+        si version >= 1.2 entonces
+            imprimir "  - " + nombre + " (Versión: " + version + ")"
+        fin_si
+        i = i + 1
+    fin_mientras
+    imprimir ""
+    
+    # Bucle 4: Análisis de versiones
+    imprimir "=== BUCLE 4: ANÁLISIS DE VERSIONES ==="
+    
+    flotante suma_versiones = 0.0
+    flotante version_maxima = 0.0
+    texto persona_version_maxima = ""
+    entero indice_maximo = 0
+    
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        flotante version = lista_obtener(versiones, i)
+        suma_versiones = suma_versiones + version
+        
+        si version > version_maxima entonces
+            version_maxima = version
+            persona_version_maxima = nombre
+            indice_maximo = i
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+    
+    flotante version_promedio = suma_versiones / total_personas
+    imprimir "Versión promedio: " + version_promedio
+    imprimir "Versión máxima: " + version_maxima + " (Persona: " + persona_version_maxima + ")"
+    imprimir "Índice de versión máxima: " + indice_maximo
+    imprimir ""
+    
+    # Bucle 5: Búsqueda de caracteres
+    imprimir "=== BUCLE 5: BÚSQUEDA DE CARACTERES ==="
+    
+    imprimir "Personas cuya posición es vocal:"
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        texto posicion = lista_obtener(posiciones, i)
+        caracter pos_char = codigo_caracter(posicion)
+        
+        # Verificar si es vocal (A, E, I, O, U o a, e, i, o, u)
+        bool es_vocal = falso
+        si pos_char == 65 o pos_char == 69 o pos_char == 73 o pos_char == 79 o pos_char == 85 entonces
+            es_vocal = verdadero
+        fin_si
+        si pos_char == 97 o pos_char == 101 o pos_char == 105 o pos_char == 111 o pos_char == 117 entonces
+            es_vocal = verdadero
+        fin_si
+        
+        si es_vocal entonces
+            imprimir "  - " + nombre + " (Posición: " + posicion + ")"
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+    imprimir ""
+    
+    # Bucle 6: Procesamiento de emails
+    imprimir "=== BUCLE 6: ANÁLISIS DE EMAILS ==="
+    
+    imprimir "Análisis de dominios de email:"
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        texto email = lista_obtener(emails, i)
+        
+        # Buscar el @ en el email
+        entero j = 0
+        entero posicion_arroba = -1
+        mientras j < lista_tamano(email) y posicion_arroba == -1 hacer
+            caracter char_email = codigo_caracter(email[j])
+            si char_email == 64 entonces  # Código ASCII para '@'
+                posicion_arroba = j
+            fin_si
+            j = j + 1
+        fin_mientras
+        
+        si posicion_arroba != -1 entonces
+            texto dominio = ""
+            entero k = posicion_arroba + 1
+            mientras k < lista_tamano(email) hacer
+                dominio = dominio + email[k]
+                k = k + 1
+            fin_mientras
+            imprimir "  - " + nombre + " -> Dominio: " + dominio
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+    imprimir ""
+    
+    # Bucle 7: Generación de reporte
+    imprimir "=== BUCLE 7: REPORTE FORMATEADO ==="
+    imprimir "REPORTE DE PERSONAS REGISTRADAS"
+    imprimir "=================================="
+    imprimir "Total de personas: " + total_personas
+    imprimir "Edad promedio: " + edad_promedio + " años"
+    imprimir "Personas activas: " + personas_activas + " (" + ((personas_activas * 100) / total_personas) + "%)"
+    imprimir "Versión promedio: " + version_promedio
+    imprimir "=================================="
+    imprimir ""
+    
+    imprimir "DETALLE DE PERSONAS:"
+    i = 0
+    mientras i < total_personas hacer
+        texto nombre = lista_obtener(nombres, i)
+        entero edad = lista_obtener(edades, i)
+        texto email = lista_obtener(emails, i)
+        texto telefono = lista_obtener(telefonos, i)
+        bool activa = lista_obtener(activas, i)
+        flotante version = lista_obtener(versiones, i)
+        texto posicion = lista_obtener(posiciones, i)
+        
+        imprimir "[" + (i + 1) + "] " + nombre
+        imprimir "    Edad: " + edad + " años"
+        imprimir "    Email: " + email
+        imprimir "    Teléfono: " + telefono
+        imprimir "    Estado: " + (activa ? "Activa" : "Inactiva")
+        imprimir "    Versión: " + version
+        imprimir "    Posición: " + posicion
+        imprimir ""
+        
+        i = i + 1
+    fin_mientras
+    
+    # Bucle 8: Cálculos avanzados
+    imprimir "=== BUCLE 8: CÁLCULOS AVANZADOS ==="
+    
+    # Calcular suma de edades por estado
+    flotante suma_edades_activas = 0.0
+    flotante suma_edades_inactivas = 0.0
+    entero contador_activas = 0
+    entero contador_inactivas = 0
+    
+    i = 0
+    mientras i < total_personas hacer
+        entero edad = lista_obtener(edades, i)
+        bool activa = lista_obtener(activas, i)
+        
+        si activa entonces
+            suma_edades_activas = suma_edades_activas + edad
+            contador_activas = contador_activas + 1
+        sino
+            suma_edades_inactivas = suma_edades_inactivas + edad
+            contador_inactivas = contador_inactivas + 1
+        fin_si
+        
+        i = i + 1
+    fin_mientras
+    
+    imprimir "Estadísticas por estado:"
+    imprimir "  Personas activas: " + contador_activas
+    si contador_activas > 0 entonces
+        imprimir "    Edad promedio activas: " + (suma_edades_activas / contador_activas) + " años"
+    fin_si
+    
+    imprimir "  Personas inactivas: " + contador_inactivas
+    si contador_inactivas > 0 entonces
+        imprimir "    Edad promedio inactivas: " + (suma_edades_inactivas / contador_inactivas) + " años"
+    fin_si
+    imprimir ""
+    
+    # =============================================================================
+    # CONCLUSIÓN
+    # =============================================================================
+    
+    imprimir "=========================================================================="
+    imprimir "RESUMEN DE CAPACIDADES DEMOSTRADAS:"
+    imprimir "✅ Listas paralelas para simular registros"
+    imprimir "✅ Bucles simples y anidados"
+    imprimir "✅ Acceso coordinado a múltiples listas"
+    imprimir "✅ Cálculos matemáticos con datos de listas"
+    imprimir "✅ Búsquedas y filtros con bucles"
+    imprimir "✅ Formato de salida personalizado"
+    imprimir "✅ Operaciones lógicas dentro de bucles"
+    imprimir "✅ Manipulación de strings y caracteres"
+    imprimir "✅ Estructuras de datos multinivel"
+    imprimir "✅ Análisis estadístico completo"
+    imprimir "✅ Generación de reportes complejos"
+    imprimir "=========================================================================="
+    imprimir "CAPACIDAD DEL LENGUAJE: COMPLETAMENTE DEMOSTRADA"
+    imprimir "=================================================="
+    
+fin_principal

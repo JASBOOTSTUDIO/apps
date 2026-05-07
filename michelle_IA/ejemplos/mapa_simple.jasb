@@ -1,0 +1,69 @@
+principal
+registro MAPAS
+    nombre: texto
+    edad: entero
+    activa: bool
+    version: flotante
+    posicion: caracter
+fin_registro
+
+registro ARR_MAPA
+    mapas: MAPAS[]
+fin_registro
+
+
+    mapa mi_mapa1<MAPAS> = {
+        nombre: "Jefry Astacio",
+        edad: 26,
+        activa: verdadero,
+        version: 1.1,
+        posicion: "A",
+    }
+    mapa mi_mapa2<MAPAS> = {
+        nombre: "Michelle Duarte",
+        edad: 19,
+        activa: verdadero,
+        version: 1.2,
+        posicion: "B",
+    }
+    imprimir "============ mapa 1 ================="
+    imprimir "Valor completo del mapa: ${mi_mapa1}"
+    imprimir "Nombre: ${mi_mapa1.nombre}"
+    imprimir "Edad: ${mi_mapa1.edad}"
+    imprimir "Activa: ${mi_mapa1.activa}"
+    imprimir "Versión: ${mi_mapa1.version}"
+    imprimir "Posición: ${mi_mapa1.posicion}, Codigo del caracter: ${codigo_caracter(mi_mapa1.posicion)}"
+
+
+    imprimir "============ mapa 2 ================="
+    imprimir "Nombre: ${mi_mapa2.nombre}"
+    imprimir "Edad: ${mi_mapa2.edad}"
+    imprimir "Activa: ${mi_mapa2.activa}"
+    imprimir "Versión: ${mi_mapa2.version}"
+    imprimir "Posición: ${mi_mapa2.posicion}, Codigo del caracter: ${codigo_caracter(mi_mapa2.posicion)}"
+
+    mapa arr_mapas<ARR_MAPA> = {
+        mapas: [mi_mapa1, mi_mapa2],  
+    }
+
+    imprimir "Array de mapas completo: "
+    imprimir arr_mapas.mapas
+    imprimir "Array de mapas posicion 0: "
+    imprimir arr_mapas.mapas[0]
+    imprimir "Array de mapas posicion 1: "
+    imprimir arr_mapas.mapas[1]
+    
+    imprimir "============ ACCESO ANIDADO 0 ================="
+    imprimir "Nombre: ${arr_mapas.mapas[0].nombre}"
+    imprimir "Edad: ${arr_mapas.mapas[0].edad}"
+    imprimir "Activa: ${arr_mapas.mapas[0].activa}"
+    imprimir "Versión: ${arr_mapas.mapas[0].version}"
+    imprimir "Posición: ${arr_mapas.mapas[0].posicion}, Codigo del caracter: ${codigo_caracter(arr_mapas.mapas[0].posicion)}"
+
+    imprimir "============ ACCESO ANIDADO 1 ================="
+    imprimir "Nombre: ${arr_mapas.mapas[1].nombre}"
+    imprimir "Edad: ${arr_mapas.mapas[1].edad}"
+    imprimir "Activa: ${arr_mapas.mapas[1].activa}"
+    imprimir "Versión: ${arr_mapas.mapas[1].version}"
+    imprimir "Posición: ${arr_mapas.mapas[1].posicion}, Codigo del caracter: ${codigo_caracter(arr_mapas.mapas[1].posicion)}"
+fin_principal
