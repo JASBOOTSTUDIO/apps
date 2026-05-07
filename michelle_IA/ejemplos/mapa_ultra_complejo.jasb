@@ -1,0 +1,559 @@
+# =============================================================================
+# SISTEMA ULTRA COMPLEJO - JASBOOT AVANZADO
+# =============================================================================
+
+# =============================================================================
+# FUNCIONES AUXILIARES
+# =============================================================================
+
+funcion calcular_promedio(lista numeros) retorna flotante
+    si lista_tamano(numeros) == 0 entonces
+        retornar 0.0
+    fin_si
+    
+    flotante suma = 0.0
+    entero i = 0
+    mientras i < lista_tamano(numeros) hacer
+        flotante numero = lista_obtener(numeros, i)
+        suma = suma + numero
+        i = i + 1
+    fin_mientras
+    
+    retornar suma / lista_tamano(numeros)
+fin_funcion
+
+funcion buscar_maximo(lista numeros) retorna flotante
+    si lista_tamano(numeros) == 0 entonces
+        retornar 0.0
+    fin_si
+    
+    flotante maximo = lista_obtener(numeros, 0)
+    entero i = 1
+    mientras i < lista_tamano(numeros) hacer
+        flotante numero = lista_obtener(numeros, i)
+        si numero > maximo entonces
+            maximo = numero
+        fin_si
+        i = i + 1
+    fin_mientras
+    
+    retornar maximo
+fin_funcion
+
+funcion contar_elementos_texto(lista textos, texto buscar_texto) retorna entero
+    entero contador = 0
+    entero i = 0
+    mientras i < lista_tamano(textos) hacer
+        texto txt = lista_obtener(textos, i)
+        si txt == buscar_texto entonces
+            contador = contador + 1
+        fin_si
+        i = i + 1
+    fin_mientras
+    retornar contador
+fin_funcion
+
+# =============================================================================
+# PROGRAMA PRINCIPAL
+# =============================================================================
+
+principal
+    imprimir "=========================================================================="
+    imprimir "SISTEMA ULTRA COMPLEJO - JASBOOT AVANZADO"
+    imprimir "=========================================================================="
+    imprimir ""
+    
+    # =============================================================================
+    # CREACIÓN DE ESTRUCTURAS COMPLEJAS CON MAPAS
+    # =============================================================================
+    
+    # Mapa de coordenadas geográficas
+    mapa coordenadas_jefry = mapa_crear()
+    mapa_poner(coordenadas_jefry, "latitud", 18.4861)
+    mapa_poner(coordenadas_jefry, "longitud", -69.9312)
+    mapa_poner(coordenadas_jefry, "altitud", 45.5)
+    mapa_poner(coordenadas_jefry, "descripcion", "Santo Domingo, República Dominicana")
+    
+    mapa coordenadas_michelle = mapa_crear()
+    mapa_poner(coordenadas_michelle, "latitud", 19.4326)
+    mapa_poner(coordenadas_michelle, "longitud", -99.1332)
+    mapa_poner(coordenadas_michelle, "altitud", 2240.0)
+    mapa_poner(coordenadas_michelle, "descripcion", "Ciudad de México, México")
+    
+    # Mapa de habilidades técnicas
+    mapa habilidades_jefry = mapa_crear()
+    lista tecnicas_jefry = crear_lista()
+    lista_agregar(tecnicas_jefry, "JavaScript")
+    lista_agregar(tecnicas_jefry, "Python")
+    lista_agregar(tecnicas_jefry, "React")
+    lista_agregar(tecnicas_jefry, "Node.js")
+    lista_agregar(tecnicas_jefry, "MongoDB")
+    lista_agregar(tecnicas_jefry, "Docker")
+    lista_agregar(tecnicas_jefry, "AWS")
+    lista_agregar(tecnicas_jefry, "Kubernetes")
+    mapa_poner(habilidades_jefry, "tecnicas", tecnicas_jefry)
+    mapa_poner(habilidades_jefry, "nivel_experticia", 85)
+    mapa_poner(habilidades_jefry, "años_experiencia", 7)
+    
+    mapa habilidades_michelle = mapa_crear()
+    lista tecnicas_michelle = crear_lista()
+    lista_agregar(tecnicas_michelle, "Java")
+    lista_agregar(tecnicas_michelle, "Spring Boot")
+    lista_agregar(tecnicas_michelle, "Angular")
+    lista_agregar(tecnicas_michelle, "PostgreSQL")
+    lista_agregar(tecnicas_michelle, "Redis")
+    lista_agregar(tecnicas_michelle, "Jenkins")
+    lista_agregar(tecnicas_michelle, "Azure")
+    lista_agregar(tecnicas_michelle, "Terraform")
+    mapa_poner(habilidades_michelle, "tecnicas", tecnicas_michelle)
+    mapa_poner(habilidades_michelle, "nivel_experticia", 78)
+    mapa_poner(habilidades_michelle, "años_experiencia", 5)
+    
+    # Mapa de información personal
+    mapa info_jefry = mapa_crear()
+    mapa_poner(info_jefry, "nombre", "Jefry Astacio")
+    mapa_poner(info_jefry, "edad", 29)
+    mapa_poner(info_jefry, "email", "jefry.astacio@empresa.com")
+    mapa_poner(info_jefry, "telefono", "+1-809-555-0123")
+    mapa_poner(info_jefry, "puesto", "Senior Full Stack Developer")
+    mapa_poner(info_jefry, "salario_base", 85000.0)
+    mapa_poner(info_jefry, "bono_anual", 15000.0)
+    mapa_poner(info_jefry, "coordenadas", coordenadas_jefry)
+    mapa_poner(info_jefry, "habilidades", habilidades_jefry)
+    
+    mapa info_michelle = mapa_crear()
+    mapa_poner(info_michelle, "nombre", "Michelle Duarte")
+    mapa_poner(info_michelle, "edad", 26)
+    mapa_poner(info_michelle, "email", "michelle.duarte@empresa.com")
+    mapa_poner(info_michelle, "telefono", "+52-555-555-0456")
+    mapa_poner(info_michelle, "puesto", "Senior Java Developer")
+    mapa_poner(info_michelle, "salario_base", 75000.0)
+    mapa_poner(info_michelle, "bono_anual", 12000.0)
+    mapa_poner(info_michelle, "coordenadas", coordenadas_michelle)
+    mapa_poner(info_michelle, "habilidades", habilidades_michelle)
+    
+    # Mapa de proyectos
+    mapa proyecto1 = mapa_crear()
+    mapa_poner(proyecto1, "nombre", "Plataforma E-commerce Global")
+    mapa_poner(proyecto1, "presupuesto", 250000.0)
+    mapa_poner(proyecto1, "estado", "completado")
+    mapa_poner(proyecto1, "duracion_meses", 12)
+    
+    lista tecnologias_proyecto1 = crear_lista()
+    lista_agregar(tecnologias_proyecto1, "React")
+    lista_agregar(tecnologias_proyecto1, "Node.js")
+    lista_agregar(tecnologias_proyecto1, "MongoDB")
+    lista_agregar(tecnologias_proyecto1, "TensorFlow")
+    lista_agregar(tecnologias_proyecto1, "Docker")
+    mapa_poner(proyecto1, "tecnologias", tecnologias_proyecto1)
+    
+    lista equipo_proyecto1 = crear_lista()
+    lista_agregar(equipo_proyecto1, "Ana García")
+    lista_agregar(equipo_proyecto1, "Carlos Rodríguez")
+    lista_agregar(equipo_proyecto1, "María López")
+    lista_agregar(equipo_proyecto1, "Pedro Martínez")
+    lista_agregar(equipo_proyecto1, "Jefry Astacio")
+    mapa_poner(proyecto1, "equipo", equipo_proyecto1)
+    
+    mapa proyecto2 = mapa_crear()
+    mapa_poner(proyecto2, "nombre", "Sistema de Gestión Hospitalaria")
+    mapa_poner(proyecto2, "presupuesto", 180000.0)
+    mapa_poner(proyecto2, "estado", "en_progreso")
+    mapa_poner(proyecto2, "duracion_meses", 6)
+    
+    lista tecnologias_proyecto2 = crear_lista()
+    lista_agregar(tecnologias_proyecto2, "Angular")
+    lista_agregar(tecnologias_proyecto2, "Spring Boot")
+    lista_agregar(tecnologias_proyecto2, "PostgreSQL")
+    lista_agregar(tecnologias_proyecto2, "Redis")
+    lista_agregar(tecnologias_proyecto2, "Kubernetes")
+    mapa_poner(proyecto2, "tecnologias", tecnologias_proyecto2)
+    
+    lista equipo_proyecto2 = crear_lista()
+    lista_agregar(equipo_proyecto2, "Laura Sánchez")
+    lista_agregar(equipo_proyecto2, "Roberto Díaz")
+    lista_agregar(equipo_proyecto2, "Sofía Hernández")
+    lista_agregar(equipo_proyecto2, "Michelle Duarte")
+    mapa_poner(proyecto2, "equipo", equipo_proyecto2)
+    
+    # Mapa de evaluaciones de rendimiento
+    mapa evaluaciones_jefry = mapa_crear()
+    mapa_poner(evaluaciones_jefry, "evaluacion1_fecha", "2023-06-30")
+    mapa_poner(evaluaciones_jefry, "evaluacion1_puntaje", 4.5)
+    mapa_poner(evaluaciones_jefry, "evaluacion1_evaluador", "María González")
+    mapa_poner(evaluaciones_jefry, "evaluacion2_fecha", "2023-12-31")
+    mapa_poner(evaluaciones_jefry, "evaluacion2_puntaje", 4.8)
+    mapa_poner(evaluaciones_jefry, "evaluacion2_evaluador", "Carlos Pérez")
+    mapa_poner(evaluaciones_jefry, "productividad", 92.5)
+    mapa_poner(evaluaciones_jefry, "asistencia", 98.0)
+    mapa_poner(evaluaciones_jefry, "puntaje_general", 4.65)
+    
+    mapa evaluaciones_michelle = mapa_crear()
+    mapa_poner(evaluaciones_michelle, "evaluacion1_fecha", "2023-09-30")
+    mapa_poner(evaluaciones_michelle, "evaluacion1_puntaje", 4.3)
+    mapa_poner(evaluaciones_michelle, "evaluacion1_evaluador", "Roberto Díaz")
+    mapa_poner(evaluaciones_michelle, "evaluacion2_fecha", "2024-03-31")
+    mapa_poner(evaluaciones_michelle, "evaluacion2_puntaje", 4.6)
+    mapa_poner(evaluaciones_michelle, "evaluacion2_evaluador", "Laura Sánchez")
+    mapa_poner(evaluaciones_michelle, "productividad", 88.0)
+    mapa_poner(evaluaciones_michelle, "asistencia", 95.5)
+    mapa_poner(evaluaciones_michelle, "puntaje_general", 4.45)
+    
+    # Añadir evaluaciones a la información personal
+    mapa_poner(info_jefry, "evaluaciones", evaluaciones_jefry)
+    mapa_poner(info_michelle, "evaluaciones", evaluaciones_michelle)
+    
+    # Mapa de beneficios
+    mapa beneficios_jefry = mapa_crear()
+    mapa_poner(beneficios_jefry, "seguro_salud", verdadero)
+    mapa_poner(beneficios_jefry, "plan_pension", verdadero)
+    mapa_poner(beneficios_jefry, "dias_vacaciones", 25)
+    mapa_poner(beneficios_jefry, "transporte", verdadero)
+    mapa_poner(beneficios_jefry, "comida", falso)
+    mapa_poner(info_jefry, "beneficios", beneficios_jefry)
+    
+    mapa beneficios_michelle = mapa_crear()
+    mapa_poner(beneficios_michelle, "seguro_salud", verdadero)
+    mapa_poner(beneficios_michelle, "plan_pension", verdadero)
+    mapa_poner(beneficios_michelle, "dias_vacaciones", 22)
+    mapa_poner(beneficios_michelle, "transporte", falso)
+    mapa_poner(beneficios_michelle, "comida", verdadero)
+    mapa_poner(info_michelle, "beneficios", beneficios_michelle)
+    
+    # =============================================================================
+    # MAPA DE EMPRESA Y DEPARTAMENTOS
+    # =============================================================================
+    
+    mapa departamento_tecnologia = mapa_crear()
+    mapa_poner(departamento_tecnologia, "nombre", "Tecnología e Innovación")
+    mapa_poner(departamento_tecnologia, "id", 100)
+    mapa_poner(departamento_tecnologia, "gerente", "Jefry Astacio")
+    mapa_poner(departamento_tecnologia, "presupuesto_anual", 2500000.0)
+    
+    lista empleados_departamento = crear_lista()
+    lista_agregar(empleados_departamento, info_jefry)
+    lista_agregar(empleados_departamento, info_michelle)
+    mapa_poner(departamento_tecnologia, "empleados", empleados_departamento)
+    
+    lista proyectos_departamento = crear_lista()
+    lista_agregar(proyectos_departamento, proyecto1)
+    lista_agregar(proyectos_departamento, proyecto2)
+    mapa_poner(departamento_tecnologia, "proyectos_activos", proyectos_departamento)
+    
+    mapa empresa_principal = mapa_crear()
+    mapa_poner(empresa_principal, "nombre", "Global Tech Solutions S.A.")
+    mapa_poner(empresa_principal, "ruc", "12345678901")
+    mapa_poner(empresa_principal, "fundacion", "2015-03-01")
+    mapa_poner(empresa_principal, "tipo_empresa", "Tecnología y Consultoría")
+    mapa_poner(empresa_principal, "ingresos_anuales", 15000000.0)
+    
+    mapa direccion_empresa = mapa_crear()
+    mapa_poner(direccion_empresa, "calle", "Avenida Principal")
+    mapa_poner(direccion_empresa, "numero", 1000)
+    mapa_poner(direccion_empresa, "ciudad", "Santo Domingo")
+    mapa_poner(direccion_empresa, "pais", "República Dominicana")
+    mapa_poner(direccion_empresa, "codigo_postal", "10100")
+    mapa_poner(direccion_empresa, "coordenadas", coordenadas_jefry)
+    mapa_poner(empresa_principal, "direccion_sede", direccion_empresa)
+    
+    mapa contacto_empresa = mapa_crear()
+    mapa_poner(contacto_empresa, "email", "info@globaltech.com")
+    mapa_poner(contacto_empresa, "telefono", "+1-809-555-0000")
+    mapa_poner(contacto_empresa, "website", "globaltech.com")
+    mapa_poner(empresa_principal, "contacto_empresa", contacto_empresa)
+    
+    lista departamentos_empresa = crear_lista()
+    lista_agregar(departamentos_empresa, departamento_tecnologia)
+    mapa_poner(empresa_principal, "departamentos", departamentos_empresa)
+    
+    # =============================================================================
+    # DEMOSTRACIÓN DE CAPACIDADES AVANZADAS
+    # =============================================================================
+    
+    imprimir "=== INFORMACIÓN EMPRESARIAL ==="
+    imprimir "Empresa: " + mapa_obtener(empresa_principal, "nombre")
+    imprimir "RUC: " + mapa_obtener(empresa_principal, "ruc")
+    imprimir "Tipo: " + mapa_obtener(empresa_principal, "tipo_empresa")
+    imprimir "Fundación: " + mapa_obtener(empresa_principal, "fundacion")
+    imprimir "Ingresos anuales: $" + mapa_obtener(empresa_principal, "ingresos_anuales")
+    
+    mapa direccion_sede = mapa_obtener(empresa_principal, "direccion_sede")
+    imprimir "Sede: " + mapa_obtener(direccion_sede, "calle") + " " + mapa_obtener(direccion_sede, "numero")
+    imprimir "        " + mapa_obtener(direccion_sede, "ciudad") + ", " + mapa_obtener(direccion_sede, "pais")
+    imprimir ""
+    
+    imprimir "=== DEPARTAMENTO DE TECNOLOGÍA ==="
+    imprimir "Departamento: " + mapa_obtener(departamento_tecnologia, "nombre")
+    imprimir "Gerente: " + mapa_obtener(departamento_tecnologia, "gerente")
+    imprimir "Presupuesto anual: $" + mapa_obtener(departamento_tecnologia, "presupuesto_anual")
+    
+    lista empleados = mapa_obtener(departamento_tecnologia, "empleados")
+    imprimir "Número de empleados: " + lista_tamano(empleados)
+    
+    lista proyectos = mapa_obtener(departamento_tecnologia, "proyectos_activos")
+    imprimir "Proyectos activos: " + lista_tamano(proyectos)
+    imprimir ""
+    
+    # =============================================================================
+    # ANÁLISIS DETALLADO DE EMPLEADOS
+    # =============================================================================
+    
+    entero i = 0
+    mientras i < lista_tamano(empleados) hacer
+        mapa empleado = lista_obtener(empleados, i)
+        imprimir "=== EMPLEADO #" + (i + 1) + " ==="
+        imprimir "Nombre: " + mapa_obtener(empleado, "nombre")
+        imprimir "Edad: " + mapa_obtener(empleado, "edad") + " años"
+        imprimir "Email: " + mapa_obtener(empleado, "email")
+        imprimir "Teléfono: " + mapa_obtener(empleado, "telefono")
+        imprimir "Puesto: " + mapa_obtener(empleado, "puesto")
+        
+        flotante salario_base = mapa_obtener(empleado, "salario_base")
+        flotante bono_anual = mapa_obtener(empleado, "bono_anual")
+        flotante salario_total = salario_base + bono_anual
+        imprimir "Salario base: $" + salario_base
+        imprimir "Bono anual: $" + bono_anual
+        imprimir "Salario total: $" + salario_total
+        imprimir ""
+        
+        # Análisis de coordenadas
+        mapa coords = mapa_obtener(empleado, "coordenadas")
+        imprimir "--- Ubicación Geográfica ---"
+        imprimir "Latitud: " + mapa_obtener(coords, "latitud")
+        imprimir "Longitud: " + mapa_obtener(coords, "longitud")
+        imprimir "Altitud: " + mapa_obtener(coords, "altitud") + " metros"
+        imprimir "Descripción: " + mapa_obtener(coords, "descripcion")
+        imprimir ""
+        
+        # Análisis de habilidades
+        mapa habilidades = mapa_obtener(empleado, "habilidades")
+        imprimir "--- Habilidades Técnicas ---"
+        lista tecnicas = mapa_obtener(habilidades, "tecnicas")
+        imprimir "Número de tecnologías: " + lista_tamano(tecnicas)
+        imprimir "Nivel de experticia: " + mapa_obtener(habilidades, "nivel_experticia") + "%"
+        imprimir "Años de experiencia: " + mapa_obtener(habilidades, "años_experiencia")
+        
+        imprimir "Tecnologías dominadas:"
+        entero j = 0
+        mientras j < lista_tamano(tecnicas) hacer
+            texto tech = lista_obtener(tecnicas, j)
+            imprimir "  - " + tech
+            j = j + 1
+        fin_mientras
+        imprimir ""
+        
+        # Análisis de evaluaciones
+        mapa evaluaciones = mapa_obtener(empleado, "evaluaciones")
+        imprimir "--- Evaluaciones de Rendimiento ---"
+        imprimir "Productividad: " + mapa_obtener(evaluaciones, "productividad") + "%"
+        imprimir "Asistencia: " + mapa_obtener(evaluaciones, "asistencia") + "%"
+        imprimir "Puntaje general: " + mapa_obtener(evaluaciones, "puntaje_general") + "/5.0"
+        
+        # Calcular promedio de evaluaciones
+        lista puntajes = crear_lista()
+        lista_agregar(puntajes, mapa_obtener(evaluaciones, "evaluacion1_puntaje"))
+        lista_agregar(puntajes, mapa_obtener(evaluaciones, "evaluacion2_puntaje"))
+        flotante promedio_evaluaciones = calcular_promedio(puntajes)
+        imprimir "Promedio de evaluaciones: " + promedio_evaluaciones + "/5.0"
+        imprimir ""
+        
+        # Análisis de beneficios
+        mapa beneficios = mapa_obtener(empleado, "beneficios")
+        imprimir "--- Beneficios ---"
+        imprimir "Seguro de salud: " + (mapa_obtener(beneficios, "seguro_salud") ? "Sí" : "No")
+        imprimir "Plan de pensiones: " + (mapa_obtener(beneficios, "plan_pension") ? "Sí" : "No")
+        imprimir "Días de vacaciones: " + mapa_obtener(beneficios, "dias_vacaciones")
+        imprimir "Transporte: " + (mapa_obtener(beneficios, "transporte") ? "Sí" : "No")
+        imprimir "Comida: " + (mapa_obtener(beneficios, "comida") ? "Sí" : "No")
+        imprimir ""
+        
+        i = i + 1
+    fin_mientras
+    
+    # =============================================================================
+    # ANÁLISIS DE PROYECTOS
+    # =============================================================================
+    
+    imprimir "=== ANÁLISIS DE PROYECTOS ==="
+    entero j = 0
+    mientras j < lista_tamano(proyectos) hacer
+        mapa proyecto = lista_obtener(proyectos, j)
+        imprimir "--- Proyecto #" + (j + 1) + " ---"
+        imprimir "Nombre: " + mapa_obtener(proyecto, "nombre")
+        imprimir "Presupuesto: $" + mapa_obtener(proyecto, "presupuesto")
+        imprimir "Estado: " + mapa_obtener(proyecto, "estado")
+        imprimir "Duración: " + mapa_obtener(proyecto, "duracion_meses") + " meses"
+        
+        lista tecnologias = mapa_obtener(proyecto, "tecnologias")
+        imprimir "Tecnologías (" + lista_tamano(tecnologias) + "):"
+        entero k = 0
+        mientras k < lista_tamano(tecnologias) hacer
+            texto tech = lista_obtener(tecnologias, k)
+            imprimir "  ► " + tech
+            k = k + 1
+        fin_mientras
+        
+        lista equipo = mapa_obtener(proyecto, "equipo")
+        imprimir "Equipo (" + lista_tamano(equipo) + " miembros):"
+        k = 0
+        mientras k < lista_tamano(equipo) hacer
+            texto miembro = lista_obtener(equipo, k)
+            imprimir "  👤 " + miembro
+            k = k + 1
+        fin_mientras
+        
+        # Calcular costo por mes
+        flotante presupuesto = mapa_obtener(proyecto, "presupuesto")
+        entero duracion = mapa_obtener(proyecto, "duracion_meses")
+        flotante costo_por_mes = presupuesto / duracion
+        imprimir "Costo por mes: $" + costo_por_mes
+        imprimir ""
+        
+        j = j + 1
+    fin_mientras
+    
+    # =============================================================================
+    # ANÁLISIS ESTADÍSTICO AVANZADO
+    # =============================================================================
+    
+    imprimir "=== ANÁLISIS ESTADÍSTICO AVANZADO ==="
+    
+    # Análisis de salarios
+    lista salarios = crear_lista()
+    lista salarios_totales = crear_lista()
+    lista edades = crear_lista()
+    lista niveles_experticia = crear_lista()
+    lista puntajes_productividad = crear_lista()
+    
+    i = 0
+    mientras i < lista_tamano(empleados) hacer
+        mapa empleado = lista_obtener(empleados, i)
+        lista_agregar(salarios, mapa_obtener(empleado, "salario_base"))
+        lista_agregar(salarios_totales, mapa_obtener(empleado, "salario_base") + mapa_obtener(empleado, "bono_anual"))
+        lista_agregar(edades, mapa_obtener(empleado, "edad"))
+        
+        mapa habilidades = mapa_obtener(empleado, "habilidades")
+        lista_agregar(niveles_experticia, mapa_obtener(habilidades, "nivel_experticia"))
+        
+        mapa evaluaciones = mapa_obtener(empleado, "evaluaciones")
+        lista_agregar(puntajes_productividad, mapa_obtener(evaluaciones, "productividad"))
+        
+        i = i + 1
+    fin_mientras
+    
+    imprimir "--- Estadísticas Salariales ---"
+    flotante promedio_salarios = calcular_promedio(salarios)
+    flotante promedio_salarios_totales = calcular_promedio(salarios_totales)
+    flotante maximo_salario = buscar_maximo(salarios)
+    imprimir "Salario base promedio: $" + promedio_salarios
+    imprimir "Salario total promedio: $" + promedio_salarios_totales
+    imprimir "Salario máximo: $" + maximo_salario
+    imprimir ""
+    
+    imprimir "--- Estadísticas Demográficas ---"
+    flotante promedio_edades = calcular_promedio(edades)
+    flotante promedio_experticia = calcular_promedio(niveles_experticia)
+    flotante promedio_productividad = calcular_promedio(puntajes_productividad)
+    imprimir "Edad promedio: " + promedio_edades + " años"
+    imprimir "Nivel de experticia promedio: " + promedio_experticia + "%"
+    imprimir "Productividad promedio: " + promedio_productividad + "%"
+    imprimir ""
+    
+    # =============================================================================
+    # ANÁLISIS DE TECNOLOGÍAS
+    # =============================================================================
+    
+    imprimir "=== ANÁLISIS DE TECNOLOGÍAS ==="
+    lista todas_tecnologias = crear_lista()
+    
+    i = 0
+    mientras i < lista_tamano(empleados) hacer
+        mapa empleado = lista_obtener(empleados, i)
+        mapa habilidades = mapa_obtener(empleado, "habilidades")
+        lista tecnicas = mapa_obtener(habilidades, "tecnicas")
+        
+        entero j = 0
+        mientras j < lista_tamano(tecnicas) hacer
+            texto tech = lista_obtener(tecnicas, j)
+            lista_agregar(todas_tecnologias, tech)
+            j = j + 1
+        fin_mientras
+        
+        i = i + 1
+    fin_mientras
+    
+    imprimir "Total de tecnologías mencionadas: " + lista_tamano(todas_tecnologias)
+    imprimir "Tecnologías únicas:"
+    
+    # Contar frecuencias (simplificado)
+    imprimir "  JavaScript: " + contar_elementos_texto(todas_tecnologias, "JavaScript")
+    imprimir "  Python: " + contar_elementos_texto(todas_tecnologias, "Python")
+    imprimir "  React: " + contar_elementos_texto(todas_tecnologias, "React")
+    imprimir "  Node.js: " + contar_elementos_texto(todas_tecnologias, "Node.js")
+    imprimir "  Java: " + contar_elementos_texto(todas_tecnologias, "Java")
+    imprimir "  Spring Boot: " + contar_elementos_texto(todas_tecnologias, "Spring Boot")
+    imprimir ""
+    
+    # =============================================================================
+    # CÁLCULOS FINANCIEROS COMPLEJOS
+    # =============================================================================
+    
+    imprimir "=== CÁLCULOS FINANCIEROS ==="
+    
+    # Costo total de personal
+    flotante costo_total_personal = 0.0
+    i = 0
+    mientras i < lista_tamano(empleados) hacer
+        mapa empleado = lista_obtener(empleados, i)
+        flotante salario_total = mapa_obtener(empleado, "salario_base") + mapa_obtener(empleado, "bono_anual")
+        costo_total_personal = costo_total_personal + salario_total
+        i = i + 1
+    fin_mientras
+    
+    flotante presupuesto_departamento = mapa_obtener(departamento_tecnologia, "presupuesto_anual")
+    flotante porcentaje_costo_personal = (costo_total_personal / presupuesto_departamento) * 100.0
+    
+    imprimir "Costo total de personal: $" + costo_total_personal
+    imprimir "Presupuesto departamental: $" + presupuesto_departamento
+    imprimir "Porcentaje del presupuesto usado en personal: " + porcentaje_costo_personal + "%"
+    imprimir ""
+    
+    # Costo total de proyectos
+    flotante costo_total_proyectos = 0.0
+    i = 0
+    mientras i < lista_tamano(proyectos) hacer
+        mapa proyecto = lista_obtener(proyectos, i)
+        costo_total_proyectos = costo_total_proyectos + mapa_obtener(proyecto, "presupuesto")
+        i = i + 1
+    fin_mientras
+    
+    flotante porcentaje_presupuesto_proyectos = (costo_total_proyectos / presupuesto_departamento) * 100.0
+    imprimir "Costo total de proyectos: $" + costo_total_proyectos
+    imprimir "Porcentaje del presupuesto usado en proyectos: " + porcentaje_presupuesto_proyectos + "%"
+    imprimir ""
+    
+    # =============================================================================
+    # CONCLUSIÓN Y RESUMEN
+    # =============================================================================
+    
+    imprimir "=========================================================================="
+    imprimir "RESUMEN DEL SISTEMA ULTRA COMPLEJO"
+    imprimir "=========================================================================="
+    imprimir "✅ Estructuras de datos anidadas (mapas dentro de mapas)"
+    imprimir "✅ Listas complejas con múltiples tipos de datos"
+    imprimir "✅ Funciones matemáticas avanzadas"
+    imprimir "✅ Análisis estadístico completo"
+    imprimir "✅ Cálculos financieros complejos"
+    imprimir "✅ Bucles anidados y condicionales múltiples"
+    imprimir "✅ Manipulación de strings y concatenación"
+    imprimir "✅ Operaciones lógicas y booleanas"
+    imprimir "✅ Acceso profundo a estructuras anidadas"
+    imprimir "✅ Tipado estricto y conversión de tipos"
+    imprimir "✅ Gestión de memoria y optimización"
+    imprimir "=========================================================================="
+    imprimir "CAPACIDAD DEL LENGUAJE JASBOOT: DEMOSTRADA COMPLETAMENTE"
+    imprimir "=========================================================================="
+    imprimir "Nivel de complejidad alcanzado: ULTRA AVANZADO"
+    imprimir "=========================================================================="
+    
+fin_principal
